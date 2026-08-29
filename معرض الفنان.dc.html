@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="./image-slot.js"></script>
+<style>
+html, body { margin: 0; padding: 0; background: #0c0a09; }
+body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+a { color: #d9a441; text-decoration: none; }
+a:hover { color: #e8bc66; }
+::selection { background: #d43d2a; color: #fff; }
+@keyframes introFade { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes dripGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes pulseHint { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+</style>
+</helmet>
+<div dir="{{ dir }}" style="min-height: 100vh; background: #0c0a09; color: #f1ece4; overflow-x: hidden; position: relative">
+
+  <sc-if value="{{ introVisible }}" hint-placeholder-val="{{ true }}">
+    <div style="position: fixed; inset: 0; z-index: 100; background: #0c0a09; display: flex; align-items: stretch; overflow: hidden">
+      <div style="width: 26%; background: #d43d2a; transform-origin: top; animation: dripGrow 1.1s cubic-bezier(.7,0,.3,1) both"></div>
+      <div style="flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px">
+        <div style="max-width: 620px; animation: introFade 1.2s .4s cubic-bezier(.2,.8,.2,1) both">
+          <p style="margin: 0 0 14px; font-size: 14px; letter-spacing: 5px; color: #d9a441; font-weight: 500">{{ t.warn }}</p>
+          <h1 style="margin: 0 0 22px; font-family: Amiri, serif; font-size: 50px; font-weight: 700; line-height: 1.35">{{ t.introTitle1 }}<br>{{ t.introTitle2 }}</h1>
+          <p style="margin: 0 auto 40px; max-width: 440px; font-size: 17px; line-height: 1.9; color: #b8b0a4; font-weight: 300">{{ t.introBody }}</p>
+          <button onClick="{{ enterGallery }}" style="font-family: inherit; font-size: 17px; font-weight: 500; padding: 16px 48px; background: #f1ece4; color: #0c0a09; border: none; cursor: pointer; letter-spacing: 1px" style-hover="background: #d43d2a; color: #fff">{{ t.enter }}</button>
+        </div>
+      </div>
+      <div style="width: 12%; background: #2b50c8; transform-origin: bottom; animation: dripGrow 1.1s .25s cubic-bezier(.7,0,.3,1) both"></div>
+    </div>
+  </sc-if>
+
+  <header style="display: flex; justify-content: space-between; align-items: center; padding: 26px 48px; position: relative; z-index: 5">
+    <div style="font-family: Amiri, serif; font-size: 24px; font-weight: 700">{{ t.brand }} <span style="color: #d43d2a">·</span></div>
+    <nav style="display: flex; gap: 30px; font-size: 15px; align-items: center">
+      <a href="#gallery" style="color: #f1ece4" style-hover="color: #d9a441">{{ t.navWorks }}</a>
+      <a href="#about" style="color: #f1ece4" style-hover="color: #d9a441">{{ t.navAbout }}</a>
+      <a href="#contact" style="color: #f1ece4" style-hover="color: #d9a441">{{ t.navContact }}</a>
+      <button onClick="{{ toggleLang }}" style="font-family: inherit; font-size: 13px; font-weight: 500; background: none; border: 1px solid #3a352f; color: #d9a441; padding: 7px 16px; cursor: pointer; letter-spacing: 1px" style-hover="border-color: #d9a441">{{ t.langBtn }}</button>
+    </nav>
+  </header>
+
+  <section style="min-height: 80vh; display: flex; flex-direction: column; justify-content: center; padding: 40px 48px 90px; position: relative; z-index: 5">
+    <div style="position: absolute; top: 8%; inset-inline-end: 0; width: 34vw; height: 58vh; background: #d43d2a; z-index: -1"></div>
+    <div style="position: absolute; bottom: 0; inset-inline-end: 26vw; width: 16vw; height: 22vh; background: #2b50c8; z-index: -1"></div>
+    <p style="margin: 0 0 18px; font-size: 14px; letter-spacing: 5px; color: #d9a441">{{ t.heroKicker }}</p>
+    <h2 style="margin: 0; font-family: Amiri, serif; font-weight: 700; font-size: clamp(56px, 9.5vw, 136px); line-height: 1.12; max-width: 14ch">{{ t.heroTitle1 }}<br>{{ t.heroTitle2 }}</h2>
+    <p style="margin: 28px 0 0; max-width: 520px; font-size: 18px; line-height: 1.9; color: #b8b0a4; font-weight: 300">{{ t.heroBody }}</p>
+    <div style="margin-top: 56px; display: flex; align-items: center; gap: 14px; animation: pulseHint 2.6s ease-in-out infinite">
+      <div style="width: 40px; height: 1px; background: #f1ece4"></div>
+      <span style="font-size: 13px; letter-spacing: 3px; color: #b8b0a4">{{ t.heroHint }}</span>
+    </div>
+  </section>
+
+  <section id="gallery" style="padding: 60px 48px 120px; position: relative; z-index: 5">
+    <div style="display: flex; align-items: baseline; gap: 20px; margin-bottom: 48px">
+      <h3 style="margin: 0; font-family: Amiri, serif; font-size: 42px; font-weight: 700">{{ t.galleryTitle }}</h3>
+      <span style="font-size: 14px; color: #7d766b">2019 — 2026</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px">
+      <sc-for list="{{ artworks }}" as="art" hint-placeholder-count="6">
+        <figure style="margin: 0; grid-column: span {{ art.span }}; transition: transform .5s cubic-bezier(.2,.8,.2,1)" style-hover="transform: perspective(900px) rotateX(2deg) rotateY(-3deg) translateY(-8px)">
+          <div style="position: relative; height: {{ art.h }}; background: #17140f; border: 1px solid #2a2622; padding: 14px; box-sizing: border-box">
+            <image-slot id="{{ art.id }}" shape="rect" placeholder="{{ art.ph }}"></image-slot>
+          </div>
+          <figcaption style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; gap: 12px">
+            <span style="font-family: Amiri, serif; font-size: 21px">{{ art.title }}</span>
+            <span style="font-size: 13px; color: #7d766b; white-space: nowrap">{{ art.meta }}</span>
+          </figcaption>
+        </figure>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="about" style="padding: 100px 48px; background: #2b50c8; position: relative; z-index: 5">
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 64px; align-items: center; max-width: 1100px; margin: 0 auto">
+      <div style="transform: rotate(-2deg); box-shadow: 18px 18px 0 #0c0a09">
+        <image-slot id="artist-portrait" shape="rect" placeholder="{{ t.portraitPh }}" style="width: 100%; height: 420px"></image-slot>
+      </div>
+      <div>
+        <h3 style="margin: 0 0 24px; font-family: Amiri, serif; font-size: 42px; font-weight: 700; color: #fff">{{ t.aboutTitle }}</h3>
+        <p style="margin: 0 0 18px; font-size: 17px; line-height: 2; color: #dfe5f8; font-weight: 300">{{ t.aboutP1 }}</p>
+        <p style="margin: 0; font-size: 17px; line-height: 2; color: #dfe5f8; font-weight: 300">{{ t.aboutP2 }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" style="padding: 120px 48px; text-align: center; position: relative; z-index: 5">
+    <div style="position: absolute; top: 0; inset-inline-start: 0; width: 22vw; height: 100%; background: #d9a441; opacity: .12; z-index: -1"></div>
+    <h3 style="margin: 0 0 16px; font-family: Amiri, serif; font-size: 46px; font-weight: 700">{{ t.contactTitle }}</h3>
+    <p style="margin: 0 auto 36px; max-width: 420px; font-size: 16px; line-height: 1.9; color: #b8b0a4; font-weight: 300">{{ t.contactBody }}</p>
+    <a href="mailto:hello@example.com" style="display: inline-block; font-size: 16px; font-weight: 500; padding: 15px 44px; background: #d43d2a; color: #fff" style-hover="background: #b93222; color: #fff">{{ t.contactBtn }}</a>
+  </section>
+
+  <footer style="display: flex; justify-content: space-between; align-items: center; padding: 26px 48px; border-top: 1px solid #2a2622; font-size: 13px; color: #7d766b; position: relative; z-index: 5; gap: 16px; flex-wrap: wrap">
+    <span>{{ t.footer }}</span>
+    <button onClick="{{ clearStains }}" style="font-family: inherit; font-size: 13px; background: none; border: 1px solid #2a2622; color: #7d766b; padding: 8px 18px; cursor: pointer; white-space: nowrap" style-hover="color: #f1ece4; border-color: #7d766b">{{ t.reset }}</button>
+  </footer>
+
+  <div ref="{{ paintLayerRef }}" style="position: absolute; inset: 0; z-index: 40; pointer-events: none"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;palette&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: [&quot;#d43d2a&quot;, &quot;#2b50c8&quot;, &quot;#d9a441&quot;, &quot;#1f7a6d&quot;, &quot;#c2427e&quot;], &quot;tsType&quot;: &quot;string[]&quot;, &quot;options&quot;: [[&quot;#d43d2a&quot;, &quot;#2b50c8&quot;, &quot;#d9a441&quot;, &quot;#1f7a6d&quot;, &quot;#c2427e&quot;], [&quot;#e8452f&quot;, &quot;#f0a03a&quot;, &quot;#f5d547&quot;, &quot;#c2427e&quot;, &quot;#7a3be0&quot;], [&quot;#2b50c8&quot;, &quot;#1f7a6d&quot;, &quot;#5aa8d6&quot;, &quot;#d9a441&quot;, &quot;#8a8275&quot;]], &quot;section&quot;: &quot;التلطخات&quot;}, &quot;stainIntensity&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 5, &quot;min&quot;: 1, &quot;max&quot;: 10, &quot;step&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;التلطخات&quot;}, &quot;showIntro&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;الدخول&quot;}}">
+class Component extends DCLogic {
+  state = { introVisible: true, lang: 'ar' };
+  paintLayerRef = React.createRef();
+  ops = [];
+  colorIdx = 0;
+  down = false;
+  last = null;
+  saveTimer = null;
+
+  palette() {
+    const p = this.props.palette;
+    return (Array.isArray(p) && p.length) ? p : ['#d43d2a', '#2b50c8', '#d9a441', '#1f7a6d', '#c2427e'];
+  }
+  intensity() { return (this.props.stainIntensity ?? 5) / 5; }
+
+  componentDidMount() {
+    if (this.props.showIntro === false) this.setState({ introVisible: false });
+    const host = this.paintLayerRef.current;
+    if (!host) return;
+    const cv = document.createElement('canvas');
+    cv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%';
+    host.appendChild(cv);
+    this.cv = cv;
+    this.ctx = cv.getContext('2d');
+    try { this.ops = JSON.parse(localStorage.getItem('gallery-stains-v1') || '[]'); } catch (e) { this.ops = []; }
+    this.sizeAndReplay();
+    this.ro = new ResizeObserver(() => this.sizeAndReplay());
+    this.ro.observe(document.body);
+    this.onDown = (e) => {
+      if (this.state.introVisible) return;
+      if (e.target.closest && e.target.closest('button, a, image-slot, input, nav')) return;
+      this.down = true;
+      this.last = [e.pageX, e.pageY];
+      this.stamp(e.pageX, e.pageY);
+    };
+    this.onMove = (e) => {
+      if (!this.down || this.state.introVisible) return;
+      const [lx, ly] = this.last;
+      const dx = e.pageX - lx, dy = e.pageY - ly;
+      const d = Math.hypot(dx, dy);
+      if (d < 14) return;
+      this.addOp({ k: 's', x1: lx, y1: ly, x2: e.pageX, y2: e.pageY, c: this.nextColor(), r: (8 + Math.random() * 14) * this.intensity(), sd: (Math.random() * 1e9) | 0 });
+      this.last = [e.pageX, e.pageY];
+    };
+    this.onUp = () => { this.down = false; this.last = null; };
+    window.addEventListener('pointerdown', this.onDown);
+    window.addEventListener('pointermove', this.onMove);
+    window.addEventListener('pointerup', this.onUp);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('pointerdown', this.onDown);
+    window.removeEventListener('pointermove', this.onMove);
+    window.removeEventListener('pointerup', this.onUp);
+    if (this.ro) this.ro.disconnect();
+  }
+
+  sizeAndReplay() {
+    const h = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+    const w = document.documentElement.clientWidth;
+    if (this.cv.width === w && this.cv.height === h) return;
+    this.cv.width = w; this.cv.height = h;
+    for (const op of this.ops) this.draw(op);
+  }
+
+  rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  nextColor() { const p = this.palette(); return p[(this.colorIdx++) % p.length]; }
+
+  stamp(x, y) {
+    const kinds = ['b', 'p', 'i'];
+    const k = kinds[(Math.random() * 3) | 0];
+    this.addOp({ k, x, y, c: this.nextColor(), r: (18 + Math.random() * 34) * this.intensity(), sd: (Math.random() * 1e9) | 0 });
+  }
+
+  addOp(op) {
+    this.ops.push(op);
+    if (this.ops.length > 1200) this.ops = this.ops.slice(-1000);
+    this.draw(op);
+    clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => {
+      try { localStorage.setItem('gallery-stains-v1', JSON.stringify(this.ops)); } catch (e) {}
+    }, 400);
+  }
+
+  draw(op) {
+    const ctx = this.ctx, rnd = this.rng(op.sd || 1);
+    ctx.save();
+    if (op.k === 'b') { // thick oil blob: overlapping ellipses + flecks
+      ctx.fillStyle = op.c; ctx.globalAlpha = 0.92;
+      for (let i = 0; i < 6; i++) {
+        const a = rnd() * Math.PI * 2, d = rnd() * op.r * 0.45;
+        ctx.beginPath();
+        ctx.ellipse(op.x + Math.cos(a) * d, op.y + Math.sin(a) * d, op.r * (0.4 + rnd() * 0.5), op.r * (0.3 + rnd() * 0.45), rnd() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      for (let i = 0; i < 7; i++) {
+        const a = rnd() * Math.PI * 2, d = op.r * (0.9 + rnd() * 1.6);
+        ctx.beginPath();
+        ctx.arc(op.x + Math.cos(a) * d, op.y + Math.sin(a) * d, 1.5 + rnd() * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (op.k === 'p') { // spray
+      ctx.fillStyle = op.c;
+      for (let i = 0; i < 60; i++) {
+        const a = rnd() * Math.PI * 2, d = (rnd() + rnd()) * 0.5 * op.r * 2.2;
+        ctx.globalAlpha = 0.25 + rnd() * 0.6;
+        ctx.beginPath();
+        ctx.arc(op.x + Math.cos(a) * d, op.y + Math.sin(a) * d, 0.6 + rnd() * 2.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (op.k === 'i') { // soft ink bleed
+      for (let i = 4; i >= 1; i--) {
+        ctx.globalAlpha = 0.10 + (4 - i) * 0.07;
+        ctx.fillStyle = op.c;
+        ctx.beginPath();
+        ctx.arc(op.x + (rnd() - 0.5) * 8, op.y + (rnd() - 0.5) * 8, op.r * (0.5 + i * 0.28), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (op.k === 's') { // brush stroke segment
+      ctx.strokeStyle = op.c; ctx.lineCap = 'round'; ctx.globalAlpha = 0.85;
+      const n = 3;
+      for (let i = 0; i < n; i++) {
+        ctx.lineWidth = op.r * (0.35 + rnd() * 0.6);
+        const ox = (rnd() - 0.5) * op.r * 0.7, oy = (rnd() - 0.5) * op.r * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(op.x1 + ox, op.y1 + oy);
+        ctx.lineTo(op.x2 + ox, op.y2 + oy);
+        ctx.stroke();
+      }
+      if (rnd() > 0.6) { ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(op.x2 + (rnd() - 0.5) * 30, op.y2 + (rnd() - 0.5) * 30, 1.5 + rnd() * 3, 0, Math.PI * 2); ctx.fillStyle = op.c; ctx.fill(); }
+    }
+    ctx.restore();
+  }
+
+  copy() {
+    const ar = {
+      warn: 'تـنـبـيـه', introTitle1: 'دير بالك… من هاللحظة', introTitle2: 'بلّشت ترسم لوحتك',
+      introBody: 'كل نقرة وكل مسحة منك رح تترك تلطّخة لون ما بتنمحى. هالمعرض ما بيكتمل إلا فيك — امشِ فيه متل ما بدك، بس اعرف إنو أثرك رح يبقى.',
+      enter: 'افتح الباب وابدأ لوحتك', brand: 'مرسَم نديم', navWorks: 'اللوحات', navAbout: 'عن الفنان', navContact: 'اقتناء لوحة', langBtn: 'EN',
+      heroKicker: 'معرض شخصي — تجريد وألوان جريئة', heroTitle1: 'اللون ما بينسى', heroTitle2: 'مين لمسو',
+      heroBody: 'جولة بين لوحات رسمتها على مدى سنين — وأنت عم تتجول، إيدك عم ترسم فوقها لوحة تانية.',
+      heroHint: 'انزل لتحت — وجرّب تكبس أو تسحب بأي مكان', galleryTitle: 'اللوحات',
+      portraitPh: 'صورة الفنان بالمرسم', aboutTitle: 'عن الفنان',
+      aboutP1: 'بشتغل بالزيت والأكريليك على قماش من أكتر من عشر سنين. اللوحة عندي ما بتخلص لما وقّعها — بتخلص لما حدا يوقف قدامها ويتركها تغيّر شي فيه.',
+      aboutP2: 'لهيك هالموقع مبني هيك: مش صالة عرض تتفرج فيها من بعيد، هو قماشة كبيرة، وأنت واحد من ألوانها.',
+      contactTitle: 'حابب تقتني لوحة؟', contactBody: 'ابعتلي، وخبرني أي لوحة وقّفتك — أو خلينا نرسم وحدة إلك من الصفر.',
+      contactBtn: 'تواصل معي', footer: '© ٢٠٢٦ مرسَم نديم — كل التلطخات من صنع الزوار', reset: 'امسح لوحة الزوار وابدأ من جديد',
+      arts: [
+        { title: 'انفجار هادي', meta: 'زيت — ٢٠٢٤' }, { title: 'أزرق يصرخ', meta: 'أكريليك — ٢٠٢٣' },
+        { title: 'ذاكرة صدفة', meta: 'زيت — ٢٠٢٦' }, { title: 'حيطان قديمة', meta: 'ميكس ميديا — ٢٠٢٢' },
+        { title: 'ضجيج داخلي', meta: 'زيت — ٢٠٢٥' }, { title: 'بلا عنوان ٧', meta: 'أكريليك — ٢٠١٩' }
+      ]
+    };
+    const en = {
+      warn: 'W A R N I N G', introTitle1: 'Careful… from this moment', introTitle2: 'you started painting',
+      introBody: 'Every click and every swipe leaves a permanent stain of color. This gallery is incomplete without you — wander as you like, but know your trace will remain.',
+      enter: 'Open the door & start your painting', brand: 'Nadim Studio', navWorks: 'Works', navAbout: 'About', navContact: 'Collect', langBtn: 'عربي',
+      heroKicker: 'Solo exhibition — bold abstraction', heroTitle1: 'Color never forgets', heroTitle2: 'who touched it',
+      heroBody: 'A walk through paintings made over the years — and as you walk, your hand paints another one on top.',
+      heroHint: 'Scroll down — and try clicking or dragging anywhere', galleryTitle: 'The Works',
+      portraitPh: 'Artist in the studio', aboutTitle: 'About the artist',
+      aboutP1: 'I have worked in oil and acrylic on canvas for over ten years. A painting is not finished when I sign it — it is finished when someone stands before it and lets it change something in them.',
+      aboutP2: 'That is why this site is built this way: not a gallery you watch from afar, but one large canvas — and you are one of its colors.',
+      contactTitle: 'Want to collect a piece?', contactBody: 'Write to me and tell me which painting stopped you — or let us paint one for you from scratch.',
+      contactBtn: 'Get in touch', footer: '© 2026 Nadim Studio — all stains made by visitors', reset: 'Wipe the visitors\u2019 canvas',
+      arts: [
+        { title: 'Quiet Explosion', meta: 'Oil — 2024' }, { title: 'Screaming Blue', meta: 'Acrylic — 2023' },
+        { title: 'Memory of Rust', meta: 'Oil — 2026' }, { title: 'Old Walls', meta: 'Mixed media — 2022' },
+        { title: 'Inner Noise', meta: 'Oil — 2025' }, { title: 'Untitled 7', meta: 'Acrylic — 2019' }
+      ]
+    };
+    return this.state.lang === 'ar' ? ar : en;
+  }
+
+  renderVals() {
+    const t = this.copy();
+    const spans = [3, 3, 2, 2, 2, 6];
+    const hs = ['420px', '420px', '340px', '340px', '340px', '460px'];
+    const artworks = t.arts.map((a, i) => ({ ...a, id: 'art-' + (i + 1), span: spans[i], h: hs[i], ph: this.state.lang === 'ar' ? 'اسحب صورة اللوحة لهون' : 'Drop the painting photo here' }));
+    return {
+      t, artworks,
+      dir: this.state.lang === 'ar' ? 'rtl' : 'ltr',
+      introVisible: this.state.introVisible,
+      paintLayerRef: this.paintLayerRef,
+      toggleLang: () => this.setState(s => ({ lang: s.lang === 'ar' ? 'en' : 'ar' })),
+      enterGallery: () => {
+        this.setState({ introVisible: false });
+        setTimeout(() => {
+          const w = window.innerWidth, h = window.innerHeight;
+          for (let i = 0; i < 5; i++) this.stamp(w * (0.2 + Math.random() * 0.6), h * (0.15 + Math.random() * 0.5));
+        }, 150);
+      },
+      clearStains: () => {
+        this.ops = [];
+        try { localStorage.setItem('gallery-stains-v1', '[]'); } catch (e) {}
+        if (this.ctx) this.ctx.clearRect(0, 0, this.cv.width, this.cv.height);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
