@@ -1,74 +1,80 @@
-# مرسَم نديم — Nadim Studio
+# Nadim Studio
 
-معرض أعمال لفنان تشكيلي: صفحة معرض فيها قماشة تفاعلية، جولة متحف ثلاثية الأبعاد،
-وقاعة نحت بـ WebGL. عربي (RTL) وإنجليزي (LTR)، والاثنان مواطنان من الدرجة الأولى.
+A painter's portfolio: a gallery page with an interactive canvas, a scroll-driven
+3D museum walk, and a WebGL sculpture room. English, left-to-right.
 
-## التشغيل
+## Running it
 
 ```bash
 cd web
 npm install
-npm run dev        # خادم التطوير
+npm run dev        # dev server
 ```
 
-| الأمر | الوظيفة |
+| Command | What it does |
 | --- | --- |
-| `npm run dev` | خادم تطوير (Vite) |
-| `npm run build` | فحص الأنواع + بناء الإنتاج إلى `web/dist` |
-| `npm run preview` | معاينة الناتج المبني |
+| `npm run dev` | Vite dev server |
+| `npm run build` | Type-check, then a production build into `web/dist` |
+| `npm run preview` | Serve the built output |
 | `npm run typecheck` | `tsc -b --noEmit` |
-| `npm run lint` | ESLint، صفر تحذيرات مسموحة |
+| `npm run lint` | ESLint, zero warnings allowed |
 
-## البنية
+## Layout
 
 ```
 web/
   src/
-    data/artworks.ts     ← المصدر الوحيد للوحات وهندسة الممر
-    data/site.ts         ← بريد التواصل والمسارات
-    i18n/strings.ts      ← كل النصوص المرئية بالعربي والإنجليزي
-    i18n/useLang.ts      ← مخزن اللغة، يزامن <html lang/dir>
-    components/          ← Dialog (محاصرة تركيز) · Notice · LangToggle · Artwork
+    data/artworks.ts     ← the only source of the collection and the corridor geometry
+    data/site.ts         ← contact address and routes
+    i18n/strings.ts      ← every user-facing string
+    components/          ← Dialog (focus trap) · Notice · Artwork
     routes/
       Home.tsx
       Gallery.tsx        + usePaintCanvas.ts
       Museum.tsx         + useCorridor.ts + museum/
       Sculpture.tsx      + sculpture/scene.ts
-legacy/                  ← البناء القديم (.dc.html) للمرجع فقط، مش مربوط بالبناء
+legacy/                  ← the previous .dc.html build, kept for reference only;
+                           nothing builds from it
 ```
 
-**المكدس:** React 19 · Vite 8 · TypeScript 5.9 (strict) · Tailwind 4 · react-router-dom 7 · zustand 5 · three 0.185
+**Stack:** React 19 · Vite 8 · TypeScript 5.9 (strict) · Tailwind 4 ·
+react-router-dom 7 · three 0.185
 
-## قواعد المشروع
+## House rules
 
-هالقواعد مطبّقة بالأدوات، مش متروكة للذاكرة:
+These are enforced by the tooling, not left to memory:
 
-- **لا نص مكتوب بالكود.** كل كلمة مرئية بتيجي من `src/i18n/strings.ts`. نوع `Strings`
-  مشتق من الجدول العربي، فمفتاح بلا ترجمة إنجليزية = خطأ ترجمة.
-- **مصدر واحد للبيانات.** اللوحات وهندسة الممر بـ `artworks.ts`. البناء القديم كان فيه
-  ٣ نسخ من نفس اللائحة — لهيك طلع المخطط مقلوب.
-- **ما في فشل صامت.** أي عملية بتفشل بحفظ شغل الزائر بترفع `NoticeCode` وبتظهر بـ
-  `<Notice>`. ممنوع `catch` فاضي.
-- **خصائص منطقية فقط** (`ps-`/`pe-`/`ms-`/`me-`/`start`/`end`) بواجهة المستخدم.
-  الإحداثيات الفيزيائية مسموحة **فقط** داخل هندسة المشهد ثلاثي الأبعاد.
-- **الوصول:** كل نافذة منبثقة تمر عبر `<Dialog>` (محاصرة تركيز + استرجاع + Escape)،
-  كل صورة إلها `alt` حقيقي، كل زر إله اسم، أهداف اللمس ≥ ٤٤px، و`prefers-reduced-motion`
-  محترم بالـ CSS وبمحرك الكاميرا.
+- **No user-facing strings written into components.** Every visible word comes
+  from `src/i18n/strings.ts`, so a wording change is one edit in one file.
+- **One source of truth for data.** Artwork and corridor geometry live in
+  `artworks.ts`. The previous build kept three copies of that list, which is how
+  its map ended up drawing the corridor backwards.
+- **No silent failures.** Anything that fails to persist a visitor's work raises
+  a `NoticeCode` and surfaces through `<Notice>`. No empty `catch`.
+- **Accessibility.** Every overlay goes through `<Dialog>` (focus trap, focus
+  restore, Escape); every image has a real `alt`; every control has an
+  accessible name; tap targets are at least 44px; `prefers-reduced-motion` is
+  honoured in both the CSS and the camera loop.
+- **Logical CSS properties** (`ps-`/`pe-`/`ms-`/`me-`/`start`/`end`) in the UI
+  chrome. Physical coordinates are used only inside the 3D scene geometry, where
+  they describe world space rather than reading order.
 
-## النشر
+## Deploying
 
 ```bash
-docker build -t marsam-nadim web/
-docker run -p 8080:80 marsam-nadim
+docker build -t nadim-studio web/
+docker run -p 8080:80 nadim-studio
 ```
-أو ارفع محتوى `web/dist` على أي استضافة ملفات ثابتة (التوجيه بالـ hash، فما بدو
-إعدادات إعادة كتابة عالخادم).
 
-## قبل الإطلاق — غير منجز
+Or upload the contents of `web/dist` to any static host — routing is hash-based,
+so no server rewrite rules are needed.
 
-- [ ] **`CONTACT_EMAIL` بـ `web/src/data/site.ts` لسا `hello@example.com`.** هاد الطريق
-      الوحيد للتواصل بكل الموقع؛ لازم يتبدّل قبل النشر.
-- [ ] **ما في صورة للفنان.** قسم «عن الفنان» عم يعرض لوحة بدل البورتريه. لما تجهز
-      الصورة، حطها بـ `web/src/assets` وبدّل ذاك البلوك (`t.portraitAlt` جاهزة).
-- [ ] **غرفة الدراسات فاضية.** إطاراتها التلاتة بلا صور — ما انحطّت بيانات وهمية
-      مكانها عن قصد.
+## Before launch — not done
+
+- [ ] **`CONTACT_EMAIL` in `web/src/data/site.ts` is still `hello@example.com`.**
+      It is the only contact route on the site and must be replaced.
+- [ ] **There is no photograph of the artist.** The About section shows a
+      painting instead. Drop a portrait into `web/src/assets` and swap that
+      block; `t.portraitAlt` is already there for it.
+- [ ] **The study-room frames are empty.** No study images exist in the project,
+      and placeholder images were deliberately not invented.

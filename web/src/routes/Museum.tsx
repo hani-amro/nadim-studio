@@ -20,7 +20,6 @@ import { ROUTES, mailto } from '../data/site'
 import { captionMeta, note, orderLabel, sizeLabel, title } from '../i18n/strings'
 import { useLang } from '../i18n/useLang'
 import { Dialog } from '../components/Dialog'
-import { LangToggle } from '../components/LangToggle'
 import { Notice, type NoticeCode } from '../components/Notice'
 import { Bays } from './museum/Bays'
 import { Guestbook, type GuestNote } from './museum/Guestbook'
@@ -98,7 +97,7 @@ const PLINTH: CSSProperties = {
 }
 
 export function Museum() {
-  const { t, lang } = useLang()
+  const { t } = useLang()
 
   const [introVisible, setIntroVisible] = useState(true)
   const [focus, setFocus] = useState<number | null>(null)
@@ -119,7 +118,7 @@ export function Museum() {
   const heading = useRef<HTMLHeadingElement>(null)
 
   const corridor = useCorridor(
-    { focus, room, mapOpen, gbOpen, introVisible, narrow, lang },
+    { focus, room, mapOpen, gbOpen, introVisible, narrow },
     { onFocus: setFocus, onRoom: setRoom, onNarrow: setNarrow },
   )
 
@@ -773,8 +772,8 @@ export function Museum() {
                 const z = paintingZ(i)
                 const resting = `translateX(${side * 470}px) translateZ(${z}px) rotateY(${-side * 24}deg) rotateX(-2deg)`
                 const opened = `translateX(${side * 470}px) translateZ(${z}px) rotateY(${-side * 5}deg)`
-                const name = title(art, lang)
-                const meta = captionMeta(art, t, lang)
+                const name = title(art)
+                const meta = captionMeta(art)
                 return (
                   <div
                     key={art.id}
@@ -835,7 +834,7 @@ export function Museum() {
                         transform: 'translateZ(-90px)',
                       }}
                     >
-                      {orderLabel(art.order, lang)}
+                      {orderLabel(art.order)}
                     </div>
                     <div
                       aria-hidden="true"
@@ -968,7 +967,7 @@ export function Museum() {
                         {name}
                       </p>
                       <p style={{ margin: '6px 0 0', fontSize: 13, color: '#c9b98e' }}>
-                        {meta} · {orderLabel(art.order, lang)}
+                        {meta} · {orderLabel(art.order)}
                       </p>
                       <p
                         aria-hidden="true"
@@ -1263,17 +1262,6 @@ export function Museum() {
             className="pointer-events-auto relative m-0 font-display text-lg font-bold text-ink-museum outline-none sm:text-xl"
           >
             {t.brand}
-            {/* The Latin lockup is a transliteration for the Arabic wordmark;
-                in English it would just repeat the name back. */}
-            {lang === 'ar' && (
-              <>
-                {' '}
-                <span className="text-brand-gold">·</span>{' '}
-                <span lang="en" className="text-xs tracking-[0.25em] text-muted-museum">
-                  {t.brandLatin}
-                </span>
-              </>
-            )}
             <span
               aria-hidden="true"
               className="absolute inset-x-0 -bottom-1.5 block h-[3px] bg-[linear-gradient(90deg,transparent,#d9a441_30%,#ffe9b0_60%,#d9a441)]"
@@ -1287,7 +1275,7 @@ export function Museum() {
             <a href={mailto} className="flex min-h-11 items-center px-1 text-sm text-brand-gold hover:text-brand-gold-bright">
               {t.contact}
             </a>
-            <LangToggle />
+            
           </nav>
         </header>
 
@@ -1448,7 +1436,7 @@ export function Museum() {
  * corridor, which is world geometry, not text direction.
  */
 function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean; onClose: () => void }) {
-  const { t, lang } = useLang()
+  const { t } = useLang()
   const art = ARTWORKS[index]
   if (!art) return null
 
@@ -1500,7 +1488,7 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
           }),
   }
 
-  const name = title(art, lang)
+  const name = title(art)
 
   return (
     <Dialog open onClose={onClose}>
@@ -1565,12 +1553,12 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                     color: 'rgba(217,164,65,.08)',
                   }}
                 >
-                  {orderLabel(art.order, lang)}
+                  {orderLabel(art.order)}
                 </div>
               )}
               <div aria-hidden="true" style={{ width: 56, height: 3, background: 'linear-gradient(90deg, #d9a441, #ffe9b0)', marginBottom: 22, animation: 'fadeInUp .7s .15s ease both' }} />
               <p style={{ margin: '0 0 10px', fontSize: 13, color: '#d9a441', animation: 'fadeInUp .7s .25s ease both' }}>
-                {orderLabel(art.order, lang)} · <span style={{ letterSpacing: 2 }}>{captionMeta(art, t, lang)}</span>
+                {orderLabel(art.order)} · <span style={{ letterSpacing: 2 }}>{captionMeta(art)}</span>
               </p>
               <h2
                 id={titleId}
@@ -1579,10 +1567,10 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                 {name}
               </h2>
               <p style={{ margin: '0 0 22px', fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: narrow ? 16 : 19, lineHeight: 2, color: '#d8c9a4', animation: 'fadeInUp .7s .45s ease both' }}>
-                « {note(art, lang)} »
+                « {note(art)} »
               </p>
               <p style={{ margin: '0 0 30px', fontSize: 13, color: '#8d7c58', animation: 'fadeInUp .7s .55s ease both' }}>
-                {sizeLabel(art, t, lang)} · {t.uniqueSigned}
+                {sizeLabel(art)} · {t.uniqueSigned}
               </p>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', animation: 'fadeInUp .7s .65s ease both' }}>
                 <a href={mailto} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: 14, padding: '12px 26px', border: '1px solid #d9a441', color: '#d9a441' }}>

@@ -21,7 +21,7 @@ const UPPER = ARTWORKS.filter((a) => a.order % 2 === 1)
 const LOWER = ARTWORKS.filter((a) => a.order % 2 === 0)
 
 export function MapModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t, lang } = useLang()
+  const { t } = useLang()
 
   return (
     <Dialog open={open} onClose={onClose} className="bg-[rgba(5,4,3,.93)]">
@@ -59,8 +59,8 @@ export function MapModal({ open, onClose }: { open: boolean; onClose: () => void
               <ul className="absolute start-[10%] end-[6%] top-8 m-0 flex list-none justify-between p-0">
                 {UPPER.map((a) => (
                   <li key={a.id} className="text-center">
-                    <span className="block font-display text-xl text-brand-gold">{orderLabel(a.order, lang)}</span>
-                    <span className="block text-[11px] text-[#cbbc98]">{title(a, lang)}</span>
+                    <span className="block font-display text-xl text-brand-gold">{orderLabel(a.order)}</span>
+                    <span className="block text-[11px] text-[#cbbc98]">{title(a)}</span>
                   </li>
                 ))}
               </ul>
@@ -68,8 +68,8 @@ export function MapModal({ open, onClose }: { open: boolean; onClose: () => void
               <ul className="absolute start-[10%] end-[6%] top-[168px] m-0 flex list-none justify-between p-0">
                 {LOWER.map((a) => (
                   <li key={a.id} className="text-center">
-                    <span className="block text-[11px] text-[#cbbc98]">{title(a, lang)}</span>
-                    <span className="block font-display text-xl text-[#c9a45e]">{orderLabel(a.order, lang)}</span>
+                    <span className="block text-[11px] text-[#cbbc98]">{title(a)}</span>
+                    <span className="block font-display text-xl text-[#c9a45e]">{orderLabel(a.order)}</span>
                   </li>
                 ))}
               </ul>

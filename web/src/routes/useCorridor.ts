@@ -16,7 +16,6 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from 'react'
 import { CORRIDOR, COUNT, nearestIndex, paintingZ } from '../data/artworks'
-import { localeNum, type Lang } from '../i18n/strings'
 
 /** Depth of the "the last painting is you" mirror. It is the one prop whose
  *  fade is driven by raw camera depth instead of a painting index. */
@@ -36,7 +35,6 @@ export interface CorridorUi {
   gbOpen: boolean
   introVisible: boolean
   narrow: boolean
-  lang: Lang
 }
 
 export interface CorridorHandlers {
@@ -155,12 +153,9 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       prev.mapOpen !== ui.mapOpen ||
       prev.gbOpen !== ui.gbOpen ||
       prev.introVisible !== ui.introVisible ||
-      prev.lang !== ui.lang
+      prev.narrow !== ui.narrow
     if (changed) {
       m.current.needsPass = true
-      // The counter is written by the loop, so a language change has to
-      // invalidate the memoised value or the digits stay in the old system.
-      if (prev.lang !== ui.lang) m.current.lastNum = -1
     }
   })
 
@@ -420,8 +415,8 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       }
 
       // Forward is "further into the page": down, and the key that points the
-      // way the language reads.
-      const rtl = u.lang === 'ar'
+      // way the page reads (left-to-right).
+      const rtl = false
       const forwardKey = rtl ? 'ArrowLeft' : 'ArrowRight'
       const backKey = rtl ? 'ArrowRight' : 'ArrowLeft'
       const fwd = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === forwardKey
@@ -504,7 +499,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       if (s.lastNum !== n) {
         s.lastNum = n
         if (counterRef.current) {
-          counterRef.current.textContent = `${localeNum(n, u.lang)} / ${localeNum(COUNT, u.lang)}`
+          counterRef.current.textContent = `${n} / ${COUNT}`
         }
         railRef.current?.setAttribute('aria-valuenow', String(n))
       }

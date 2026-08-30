@@ -1,6 +1,5 @@
 import { artworkSrc, type Artwork as ArtworkData } from '../data/artworks'
 import { captionMeta, title } from '../i18n/strings'
-import { useLang } from '../i18n/useLang'
 
 /**
  * A framed painting with its caption.
@@ -23,9 +22,8 @@ interface Props {
 }
 
 export function Artwork({ art, className = '', frameClassName = '', eager = false }: Props) {
-  const { lang, t } = useLang()
-  const name = title(art, lang)
-  const meta = captionMeta(art, t, lang)
+  const name = title(art)
+  const meta = captionMeta(art)
 
   return (
     <figure id={art.id} className={`m-0 ${className}`}>

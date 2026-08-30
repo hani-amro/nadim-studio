@@ -2,10 +2,9 @@ import { Link } from 'react-router-dom'
 import { ROUTES } from '../data/site'
 import { useLang } from '../i18n/useLang'
 import { orderLabel } from '../i18n/strings'
-import { LangToggle } from '../components/LangToggle'
 
 export function Home() {
-  const { t, lang } = useLang()
+  const { t } = useLang()
 
   const rooms = [
     { to: ROUTES.gallery, title: t.roomGalleryTitle, body: t.roomGalleryBody, cta: t.roomGalleryCta },
@@ -20,7 +19,6 @@ export function Home() {
           <p className="mb-3 text-xs tracking-[0.3em] text-brand-gold sm:text-sm">{t.landingKicker}</p>
           <h1 className="font-display text-[clamp(2.4rem,9vw,5.5rem)] leading-tight font-bold">{t.brand}</h1>
         </div>
-        <LangToggle className="mt-2 shrink-0" />
       </header>
 
       <main id="main" tabIndex={-1} className="flex-1 px-5 pt-6 pb-12 outline-none sm:px-10 lg:px-16">
@@ -32,7 +30,7 @@ export function Home() {
               key={r.to}
               className="relative flex flex-col gap-2.5 border border-line bg-panel px-6 py-6 transition-[border-color,transform] duration-200 hover:-translate-y-1 hover:border-brand-gold focus-within:-translate-y-1 focus-within:border-brand-gold"
             >
-              <span className="text-xs tracking-[0.25em] text-muted">{orderLabel(i + 1, lang)}</span>
+              <span className="text-xs tracking-[0.25em] text-muted">{orderLabel(i + 1)}</span>
               <h2 className="font-display text-2xl font-bold">{r.title}</h2>
               <p className="text-sm leading-relaxed font-light text-[#b8b0a4]">{r.body}</p>
               {/* The stretched pseudo-element keeps the whole card clickable

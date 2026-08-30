@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react
 import { Link } from 'react-router-dom'
 import { Artwork } from '../components/Artwork'
 import { Dialog } from '../components/Dialog'
-import { LangToggle } from '../components/LangToggle'
 import { Notice } from '../components/Notice'
 import { ARTWORKS, GALLERY_ARTWORKS } from '../data/artworks'
 import { mailto, ROUTES } from '../data/site'
@@ -164,7 +163,7 @@ export function Gallery() {
           <Link to={ROUTES.museum} className={navLink}>
             {t.navMuseum}
           </Link>
-          <LangToggle />
+          
         </nav>
       </header>
 

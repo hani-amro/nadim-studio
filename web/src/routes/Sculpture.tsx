@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ROUTES } from '../data/site'
 import { useLang } from '../i18n/useLang'
-import { localeNum } from '../i18n/strings'
-import { LangToggle } from '../components/LangToggle'
 import { createStage, SCULPTURE, type Stage } from './sculpture/scene'
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)'
@@ -12,7 +10,7 @@ const LINK_CLASS =
   'inline-flex min-h-11 items-center border border-line-museum px-4 py-2 text-xs text-brand-gold transition-colors hover:border-brand-gold hover:text-brand-gold-bright'
 
 export function Sculpture() {
-  const { t, lang, isRtl } = useLang()
+  const { t } = useLang()
   const hostRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Stage | null>(null)
   const [failed, setFailed] = useState(false)
@@ -64,8 +62,8 @@ export function Sculpture() {
     stageRef.current?.setAutoRotate(rotating)
   }, [rotating])
 
-  const dimensions = `${localeNum(SCULPTURE.heightCm, lang)} × ${localeNum(SCULPTURE.widthCm, lang)} × ${localeNum(SCULPTURE.depthCm, lang)} ${t.cm}`
-  const caption = `${t.sculptMedium} · ${dimensions} · ${localeNum(SCULPTURE.year, lang)}`
+  const dimensions = `${String(SCULPTURE.heightCm)} × ${String(SCULPTURE.widthCm)} × ${String(SCULPTURE.depthCm)} ${t.cm}`
+  const caption = `${t.sculptMedium} · ${dimensions} · ${String(SCULPTURE.year)}`
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-canvas-sculpt text-ink-museum">
@@ -89,12 +87,6 @@ export function Sculpture() {
           <div className="max-w-[46ch]">
             <p className="text-[11px] tracking-[0.25em] text-muted-dim sm:text-xs">
               {t.sculptKicker}
-              {isRtl && (
-                <>
-                  {' · '}
-                  <span lang="en">{t.sculptLatin}</span>
-                </>
-              )}
             </p>
             <h1 className="mt-1.5 font-display text-3xl leading-tight font-bold sm:text-5xl">{t.sculptName}</h1>
             <p className="mt-2 text-xs text-muted-dim">{caption}</p>
@@ -125,7 +117,7 @@ export function Sculpture() {
                 {t.sculptSpin}
               </button>
             )}
-            <LangToggle />
+            
           </nav>
         </header>
 
