@@ -1,3 +1,4 @@
+# Editor artifacts — not part of the site
 .thumbnail
 uploads/
 *.state.json
