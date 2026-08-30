@@ -75,8 +75,10 @@ export function MapModal({ open, onClose }: { open: boolean; onClose: () => void
               </ul>
 
               <div className="absolute start-[46%] top-[104px] h-[54px] w-[54px] rounded-full border-2 border-brand-gold bg-brand-gold/10" />
-              <p className="absolute start-[36%] top-[236px] m-0 text-[11px] text-[#d8c9a4]">{t.sculptureRoom}</p>
-              <p className="absolute start-[66%] top-[236px] m-0 text-[11px] text-[#d8c9a4]">{t.studiesRoom}</p>
+              {/* Ordered by depth along the walk: the study room (z=-5400) is
+                  reached before the sculpture archway (z=-6820). */}
+              <p className="absolute start-[36%] top-[236px] m-0 text-[11px] text-[#d8c9a4]">{t.studiesRoom}</p>
+              <p className="absolute start-[66%] top-[236px] m-0 text-[11px] text-[#d8c9a4]">{t.sculptureRoom}</p>
             </div>
             </div>
 

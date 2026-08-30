@@ -126,6 +126,17 @@
   from { opacity: 0; transform: translateX(60px); }
   to { opacity: 1; transform: translateX(0); }
 }
+/* The mirror of panelIn: the info panel slides in from whichever side it is
+   pinned to, so it never appears to fly across the painting it describes. */
+@keyframes panelInL {
+  from { opacity: 0; transform: translateX(-60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+/* The blurred backdrop drifts, so a held focus view is never quite static. */
+@keyframes worldZoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.14); }
+}
 @keyframes panelInUp {
   from { opacity: 0; transform: translateY(70px); }
   to { opacity: 1; transform: translateY(0); }

@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom'
 import { ROUTES } from '../data/site'
 import { useLang } from '../i18n/useLang'
+import { orderLabel } from '../i18n/strings'
 import { LangToggle } from '../components/LangToggle'
 
 export function Home() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
 
   const rooms = [
-    { n: '٠١', nEn: '01', to: ROUTES.gallery, title: t.roomGalleryTitle, body: t.roomGalleryBody, cta: t.roomGalleryCta },
-    { n: '٠٢', nEn: '02', to: ROUTES.museum, title: t.roomMuseumTitle, body: t.roomMuseumBody, cta: t.roomMuseumCta },
-    { n: '٠٣', nEn: '03', to: ROUTES.sculpture, title: t.roomSculptureTitle, body: t.roomSculptureBody, cta: t.roomSculptureCta },
+    { to: ROUTES.gallery, title: t.roomGalleryTitle, body: t.roomGalleryBody, cta: t.roomGalleryCta },
+    { to: ROUTES.museum, title: t.roomMuseumTitle, body: t.roomMuseumBody, cta: t.roomMuseumCta },
+    { to: ROUTES.sculpture, title: t.roomSculptureTitle, body: t.roomSculptureBody, cta: t.roomSculptureCta },
   ]
 
   return (
@@ -31,7 +32,7 @@ export function Home() {
               key={r.to}
               className="relative flex flex-col gap-2.5 border border-line bg-panel px-6 py-6 transition-[border-color,transform] duration-200 hover:-translate-y-1 hover:border-brand-gold focus-within:-translate-y-1 focus-within:border-brand-gold"
             >
-              <span className="text-xs tracking-[0.25em] text-muted">{t.dir === 'rtl' ? r.n : r.nEn}</span>
+              <span className="text-xs tracking-[0.25em] text-muted">{orderLabel(i + 1, lang)}</span>
               <h2 className="font-display text-2xl font-bold">{r.title}</h2>
               <p className="text-sm leading-relaxed font-light text-[#b8b0a4]">{r.body}</p>
               {/* The stretched pseudo-element keeps the whole card clickable
@@ -48,7 +49,9 @@ export function Home() {
         </ul>
       </main>
 
-      <footer className="px-5 pb-9 text-sm text-muted sm:px-10 lg:px-16">{t.footer}</footer>
+      {/* t.footer talks about the visitor's own stains, which only exist on the
+          gallery route; the landing page has no canvas. */}
+      <footer className="px-5 pb-9 text-sm text-muted sm:px-10 lg:px-16">{t.footerPlain}</footer>
     </div>
   )
 }

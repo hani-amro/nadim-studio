@@ -214,7 +214,17 @@ export function Museum() {
 
   return (
     <>
-      <a href="#main" className="sr-only-focusable z-90 bg-panel-museum px-4 py-2 text-brand-gold">
+      {/* HashRouter owns location.hash, so a bare href="#main" would be read
+          as a route change to /main and land on the 404 page. Move focus
+          directly instead. */}
+      <a
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault()
+          document.getElementById('main')?.focus()
+        }}
+        className="sr-only-focusable z-90 bg-panel-museum px-4 py-2 text-brand-gold"
+      >
         {t.skip}
       </a>
 
@@ -1346,7 +1356,6 @@ export function Museum() {
           onClose={() => setGbOpen(false)}
           notes={notes}
           onSign={sign}
-          onNotice={setNotice}
         />
 
         {/* ---------------------------------------------------------- intro */}
@@ -1463,9 +1472,9 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
     overflowX: 'hidden',
     overflowY: 'auto',
     scrollbarWidth: 'none',
-    // panelInL is not in the shared stylesheet, so both horizontal placements
-    // share panelIn rather than adding a keyframe from a route file.
-    animation: `${narrow ? 'panelInUp' : 'panelIn'} .9s .5s cubic-bezier(.2,.8,.2,1) both`,
+    // Slide in from the side the panel is pinned to, so it never flies across
+    // the painting it is describing.
+    animation: `${narrow ? 'panelInUp' : onRight ? 'panelIn' : 'panelInL'} .9s .5s cubic-bezier(.2,.8,.2,1) both`,
     ...(narrow
       ? {
           left: 0,
@@ -1508,6 +1517,10 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 filter: 'blur(46px) saturate(1.3) brightness(.42)',
+                // The legacy slow drift, so a held focus view is never static.
+                // The global prefers-reduced-motion rule collapses it.
+                animation: 'worldZoom 22s ease-in-out infinite alternate',
+                willChange: 'transform',
                 maskImage: `radial-gradient(ellipse 46% 70% at ${holeX} 46%, transparent 60%, #000 86%)`,
                 WebkitMaskImage: `radial-gradient(ellipse 46% 70% at ${holeX} 46%, transparent 60%, #000 86%)`,
               }}

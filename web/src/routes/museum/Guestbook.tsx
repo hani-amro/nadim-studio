@@ -24,13 +24,12 @@ interface Props {
   /** Persists the note. Returns false when the browser refused the write, in
    *  which case the caller has already raised the matching notice. */
   onSign: (note: GuestNote) => boolean
-  onNotice: (code: NoticeCode) => void
 }
 
 const FIELD =
   'w-full border border-line-museum bg-[#0d0a07] px-4 py-3 text-base text-ink-museum placeholder:text-muted-dim'
 
-export function Guestbook({ open, onClose, notes, onSign, onNotice }: Props) {
+export function Guestbook({ open, onClose, notes, onSign }: Props) {
   const { t } = useLang()
   const [name, setName] = useState('')
   const [text, setText] = useState('')
@@ -38,18 +37,28 @@ export function Guestbook({ open, onClose, notes, onSign, onNotice }: Props) {
   const nameId = useId()
   const textId = useId()
 
+  // Shown inside the dialog rather than through the page-level <Notice>: the
+  // backdrop covers that one and the focus trap puts it out of reach, so the
+  // visitor could neither read nor dismiss it while signing.
+  const [inlineNotice, setInlineNotice] = useState<NoticeCode | null>(null)
+
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const body = text.trim()
     if (!body) {
-      onNotice('needText')
+      setInlineNotice('needText')
       textRef.current?.focus()
       return
     }
     const saved = onSign({ name: name.trim() || t.gbAnon, text: body })
     // Only clear the field once the note is genuinely stored; otherwise the
     // visitor would watch their words disappear into a failed write.
-    if (saved) setText('')
+    if (saved) {
+      setText('')
+      setInlineNotice(null)
+    } else {
+      setInlineNotice('blocked')
+    }
   }
 
   return (
@@ -105,6 +114,12 @@ export function Guestbook({ open, onClose, notes, onSign, onNotice }: Props) {
             >
               {t.gbSign}
             </button>
+
+            {inlineNotice && (
+              <p role="status" aria-live="polite" className="m-0 border border-[#7a1420] px-4 py-2.5 text-sm text-[#ffb4a2]">
+                {inlineNotice === 'needText' ? t.gbNeedText : t.warnBlocked}
+              </p>
+            )}
           </form>
 
           {notes.length === 0 ? (

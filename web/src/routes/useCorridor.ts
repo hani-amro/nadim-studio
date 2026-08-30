@@ -536,10 +536,14 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
 
       for (const [key, bay] of bays.current) {
         const bd = bay.z + s.cam
-        const was = bayOn.current.get(key) === true
+        // `undefined` on the first pass, deliberately: comparing it against a
+        // boolean below is what forces every bay to be written once, so a bay
+        // that starts out of range is actually hidden instead of staying
+        // rendered and keyboard-focusable at the entrance.
+        const was = bayOn.current.get(key)
         // Hysteresis: a wider window to leave than to enter, so a bay sitting
         // exactly on the boundary does not strobe.
-        const on = u.focus != null ? false : was ? bd > -3000 && bd < 1900 : bd > -2600 && bd < 1500
+        const on = u.focus != null ? false : was === true ? bd > -3000 && bd < 1900 : bd > -2600 && bd < 1500
         if (was === on) continue
         bayOn.current.set(key, on)
         if (on) {

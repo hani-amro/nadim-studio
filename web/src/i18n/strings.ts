@@ -71,6 +71,7 @@ const ar = {
   contactBtn: 'تواصل معي',
   footer: '© ٢٠٢٦ مرسَم نديم — التلطخات يلي عالشاشة من رسمك إنت',
   reset: 'امسح تلطخاتك وابدأ من جديد',
+  footerPlain: '© ٢٠٢٦ مرسَم نديم',
 
   // -- museum --
   museumIntro1: 'مرسَم نديم يقدّم',
@@ -217,6 +218,7 @@ const en: Strings = {
   contactBtn: 'Get in touch',
   footer: '© 2026 Nadim Studio — the stains on screen are yours',
   reset: 'Wipe your stains and start over',
+  footerPlain: '© 2026 Nadim Studio',
 
   museumIntro1: 'Nadim Studio presents',
   museumIntro2: 'A walk, not a website',

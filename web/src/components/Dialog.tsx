@@ -28,6 +28,15 @@ export function Dialog({ open, onClose, children, className = '', dismissable = 
   const restoreTo = useRef<HTMLElement | null>(null)
   const titleId = useId()
 
+  // Callers pass inline arrows, so `onClose` is a new function on every parent
+  // render. Keeping it in a ref (rather than in the dependency array) stops the
+  // whole trap from tearing down and re-arming mid-interaction, which used to
+  // yank focus out of the field the visitor was typing in.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+
   useEffect(() => {
     if (!open) return
     // Remember who opened us, so focus can go home on close.
@@ -42,7 +51,7 @@ export function Dialog({ open, onClose, children, className = '', dismissable = 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && dismissable) {
         e.stopPropagation()
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key !== 'Tab' || !node) return
@@ -73,9 +82,16 @@ export function Dialog({ open, onClose, children, className = '', dismissable = 
     return () => {
       document.removeEventListener('keydown', onKey, true)
       document.body.style.overflow = prevOverflow
-      restoreTo.current?.focus?.()
+      // The opener can be gone or hidden by the time we close — a painting the
+      // corridor engine culled, or a node React unmounted. Focusing a hidden
+      // element silently drops focus to <body>, so fall back to <main>.
+      const opener = restoreTo.current
+      const usable =
+        opener && opener.isConnected && opener.offsetParent !== null && typeof opener.focus === 'function'
+      if (usable) opener.focus()
+      else document.getElementById('main')?.focus()
     }
-  }, [open, onClose, dismissable])
+  }, [open, dismissable])
 
   if (!open) return null
 
@@ -83,7 +99,7 @@ export function Dialog({ open, onClose, children, className = '', dismissable = 
     <div
       className={`fixed inset-0 z-60 flex items-center justify-center p-6 ${className}`}
       onMouseDown={(e) => {
-        if (dismissable && e.target === e.currentTarget) onClose()
+        if (dismissable && e.target === e.currentTarget) onCloseRef.current()
       }}
     >
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="outline-none">
