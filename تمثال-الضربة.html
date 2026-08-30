@@ -171,6 +171,15 @@ drops.forEach((d, i) => {
 stroke.add(main, accent, heel);
 model.add(foot, body, cap, plaque, stroke);
 stage.setObject(model);
+
+// The starter's export toolbar ships English, LTR buttons on an otherwise
+// Arabic RTL page - and on a public art page it hands every visitor the
+// sculpture as a downloadable GLB/OBJ. Removed here rather than in the vendor
+// file, so re-copying the starter cannot silently put it back.
+const toolbar = stage.shadowRoot && stage.shadowRoot.querySelector('.toolbar');
+if (toolbar) toolbar.remove();
+const note = stage.shadowRoot && stage.shadowRoot.querySelector('.note');
+if (note) note.remove();
 </script>
 </body>
 </html>

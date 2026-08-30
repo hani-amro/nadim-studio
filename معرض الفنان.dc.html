@@ -12,6 +12,19 @@
 <meta property="og:description" content="لوحات زيت وأكريليك — وقماشة تفاعلية يرسم عليها الزوار.">
 <meta property="og:image" content="./paintings/art1.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<style>
+  /* Base paint belongs in the real <head>: everything inside <helmet> only
+     applies once React has booted, so without this the page flashes white. */
+  html, body { margin: 0; padding: 0; background: #0c0a09; color: #f1ece4; }
+  body { font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif; }
+  /* The whole page lives inside <x-dc>, so nothing renders until the runtime
+     lands. Show a fallback that removes itself once it does. */
+  #boot-fallback { position: fixed; inset: 0; display: flex; align-items: center;
+    justify-content: center; text-align: center; padding: 24px; z-index: 1; }
+  /* support.js replaces <x-dc> with <div id="dc-root"> once it boots. */
+  #dc-root ~ #boot-fallback { display: none; }
+</style>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -107,7 +120,7 @@ a:hover { color: #e8bc66; }
     <p style="margin: 28px 0 0; max-width: 520px; font-size: 18px; line-height: 1.9; color: #b8b0a4; font-weight: 300">{{ t.heroBody }}</p>
     <div style="margin-top: 56px; display: flex; align-items: center; gap: 14px; animation: pulseHint 2.6s ease-in-out infinite">
       <div style="width: 40px; height: 1px; background: #f1ece4"></div>
-      <span style="font-size: 13px; letter-spacing: 3px; color: #b8b0a4">{{ t.heroHint }}</span>
+      <span style="font-size: 13px; letter-spacing: 3px; color: #b8b0a4">{{ heroHint }}</span>
     </div>
   </section>
 
@@ -168,6 +181,41 @@ a:hover { color: #e8bc66; }
   <div ref="{{ paintLayerRef }}" aria-hidden="true" style="position: absolute; inset: 0; z-index: 40; pointer-events: none"></div>
 </div>
 </x-dc>
+<noscript>
+  <div style="padding: 40px 24px; max-width: 640px; margin: 0 auto; line-height: 2">
+    <h1 style="font-family: Amiri, serif">مرسَم نديم</h1>
+    <p>هالصفحة بتحتاج جافاسكربت لتشتغل. لوحات المعرض:
+       انفجار هادي · أزرق يصرخ · ذاكرة صدفة · حيطان قديمة · ضجيج داخلي · بلا عنوان ٧.</p>
+    <p>للتواصل: <a href="mailto:hello@example.com">hello@example.com</a></p>
+  </div>
+</noscript>
+<div id="boot-fallback">
+  <div style="max-width: 420px; line-height: 2">
+    <p style="font-family: Amiri, serif; font-size: 28px; margin: 0 0 10px">مرسَم نديم</p>
+    <p id="boot-msg" style="margin: 0; color: #b8b0a4; font-size: 15px">عم نحمّل المعرض…</p>
+  </div>
+</div>
+<script>
+  // If the runtime never arrives, say so instead of leaving a black page.
+  // Belt and braces: drop the fallback as soon as the runtime has rendered.
+  var booted = setInterval(function () {
+    if (!document.getElementById('dc-root')) return;
+    clearInterval(booted);
+    var f = document.getElementById('boot-fallback');
+    if (f) f.remove();
+  }, 200);
+  setTimeout(function () {
+    clearInterval(booted);
+    if (document.getElementById('dc-root')) {
+      var f = document.getElementById('boot-fallback');
+      if (f) f.remove();
+      return;
+    }
+    var m = document.getElementById('boot-msg');
+    if (m) m.innerHTML = 'ما قدرنا نحمّل المعرض — تأكد من الإنترنت وجرّب تعمل تحديث.<br>' +
+      '<a href="mailto:hello@example.com" style="color:#d9a441">hello@example.com</a>';
+  }, 8000);
+</script>
 <script type="text/x-dc" data-dc-script data-props="{&quot;palette&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: [&quot;#d43d2a&quot;, &quot;#2b50c8&quot;, &quot;#d9a441&quot;, &quot;#1f7a6d&quot;, &quot;#c2427e&quot;], &quot;tsType&quot;: &quot;string[]&quot;, &quot;options&quot;: [[&quot;#d43d2a&quot;, &quot;#2b50c8&quot;, &quot;#d9a441&quot;, &quot;#1f7a6d&quot;, &quot;#c2427e&quot;], [&quot;#e8452f&quot;, &quot;#f0a03a&quot;, &quot;#f5d547&quot;, &quot;#c2427e&quot;, &quot;#7a3be0&quot;], [&quot;#2b50c8&quot;, &quot;#1f7a6d&quot;, &quot;#5aa8d6&quot;, &quot;#d9a441&quot;, &quot;#8a8275&quot;]], &quot;section&quot;: &quot;التلطخات&quot;}, &quot;stainIntensity&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 5, &quot;min&quot;: 1, &quot;max&quot;: 10, &quot;step&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;التلطخات&quot;}, &quot;showIntro&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;الدخول&quot;}}">
 class Component extends DCLogic {
   state = { introVisible: true, lang: 'ar', warning: null };
@@ -177,6 +225,11 @@ class Component extends DCLogic {
 
   /** One place to change before this site goes live. */
   contactEmail() { return 'hello@example.com'; }
+
+  /** Mouse/pen can drag to paint; a finger drag is claimed by the scroller. */
+  finePointer() {
+    return !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+  }
   ops = [];
   colorIdx = 0;
   down = false;
@@ -372,7 +425,7 @@ class Component extends DCLogic {
       enter: 'افتح الباب وابدأ لوحتك', brand: 'مرسَم نديم', navWorks: 'اللوحات', navAbout: 'عن الفنان', navContact: 'اقتناء لوحة', langBtn: 'EN',
       heroKicker: 'معرض شخصي — تجريد وألوان جريئة', heroTitle1: 'اللون ما بينسى', heroTitle2: 'مين لمسو',
       heroBody: 'جولة بين لوحات رسمتها على مدى سنين — وأنت عم تتجول، إيدك عم ترسم فوقها لوحة تانية.',
-      heroHint: 'انزل لتحت — وجرّب تكبس أو تسحب بأي مكان', galleryTitle: 'اللوحات',
+      heroHint: 'انزل لتحت — وجرّب تكبس بأي مكان', heroHintFine: 'انزل لتحت — وجرّب تكبس أو تسحب بأي مكان', galleryTitle: 'اللوحات',
       portraitPh: 'صورة الفنان بالمرسم', aboutTitle: 'عن الفنان',
       aboutP1: 'بشتغل بالزيت والأكريليك على قماش من أكتر من عشر سنين. اللوحة عندي ما بتخلص لما وقّعها — بتخلص لما حدا يوقف قدامها ويتركها تغيّر شي فيه.',
       aboutP2: 'لهيك هالموقع مبني هيك: مش صالة عرض تتفرج فيها من بعيد، هو قماشة كبيرة، وأنت واحد من ألوانها.',
@@ -398,7 +451,7 @@ class Component extends DCLogic {
       enter: 'Open the door & start your painting', brand: 'Nadim Studio', navWorks: 'Works', navAbout: 'About', navContact: 'Collect', langBtn: 'عربي',
       heroKicker: 'Solo exhibition — bold abstraction', heroTitle1: 'Color never forgets', heroTitle2: 'who touched it',
       heroBody: 'A walk through paintings made over the years — and as you walk, your hand paints another one on top.',
-      heroHint: 'Scroll down — and try clicking or dragging anywhere', galleryTitle: 'The Works',
+      heroHint: 'Scroll down — and try tapping anywhere', heroHintFine: 'Scroll down — and try clicking or dragging anywhere', galleryTitle: 'The Works',
       portraitPh: 'Artist in the studio', aboutTitle: 'About the artist',
       aboutP1: 'I have worked in oil and acrylic on canvas for over ten years. A painting is not finished when I sign it — it is finished when someone stands before it and lets it change something in them.',
       aboutP2: 'That is why this site is built this way: not a gallery you watch from afar, but one large canvas — and you are one of its colors.',
@@ -450,6 +503,9 @@ class Component extends DCLogic {
     }));
     return {
       t, artworks,
+      // On a coarse pointer a drag is a scroll, not a stroke - promise only
+      // what the browser will actually deliver.
+      heroHint: this.finePointer() ? t.heroHintFine : t.heroHint,
       mailto: 'mailto:' + this.contactEmail(),
       langBtnLang: this.state.lang === 'ar' ? 'en' : 'ar',
       dir: this.state.lang === 'ar' ? 'rtl' : 'ltr',

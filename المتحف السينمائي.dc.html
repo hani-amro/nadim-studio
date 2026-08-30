@@ -13,6 +13,16 @@
 <meta property="og:image" content="./paintings/art1.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
+<style>
+  /* Base paint must live in the real <head>: <helmet> only applies once the
+     runtime has booted, so without this the page flashes white first. */
+  html, body { margin: 0; padding: 0; background: #0a0806; color: #efe7d8; }
+  body { font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif; }
+  #boot-fallback { position: fixed; inset: 0; display: flex; align-items: center;
+    justify-content: center; text-align: center; padding: 24px; z-index: 1; }
+  /* support.js replaces <x-dc> with <div id="dc-root"> once it boots. */
+  #dc-root ~ #boot-fallback { display: none; }
+</style>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -464,6 +474,41 @@ a:hover { color: #edc76f; }
   </sc-if>
 </div>
 </x-dc>
+<noscript>
+  <div style="padding: 40px 24px; max-width: 640px; margin: 0 auto; line-height: 2">
+    <h1 style="font-family: Amiri, serif">المتحف السينمائي — مرسَم نديم</h1>
+    <p>الجولة ثلاثية الأبعاد بتحتاج جافاسكربت. اللوحات المعروضة:
+       انفجار هادي · أزرق يصرخ · ذاكرة صدفة · حيطان قديمة · ضجيج داخلي · رقصة رماد ·
+       نافذة للضو · بلا عنوان ٧.</p>
+    <p><a href="./index.html">ارجع للرئيسية</a></p>
+  </div>
+</noscript>
+<div id="boot-fallback">
+  <div style="max-width: 420px; line-height: 2">
+    <p style="font-family: Amiri, serif; font-size: 28px; margin: 0 0 10px">مرسَم نديم</p>
+    <p id="boot-msg" style="margin: 0; color: #b8a884; font-size: 15px">عم نجهّز المتحف…</p>
+  </div>
+</div>
+<script>
+  // Belt and braces: drop the fallback as soon as the runtime has rendered.
+  var booted = setInterval(function () {
+    if (!document.getElementById('dc-root')) return;
+    clearInterval(booted);
+    var f = document.getElementById('boot-fallback');
+    if (f) f.remove();
+  }, 200);
+  setTimeout(function () {
+    clearInterval(booted);
+    if (document.getElementById('dc-root')) {
+      var f = document.getElementById('boot-fallback');
+      if (f) f.remove();
+      return;
+    }
+    var m = document.getElementById('boot-msg');
+    if (m) m.innerHTML = 'ما قدرنا نحمّل المتحف — تأكد من الإنترنت وجرّب تعمل تحديث.<br>' +
+      '<a href="./index.html" style="color:#d9a441">ارجع للرئيسية</a>';
+  }, 8000);
+</script>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 900}, &quot;parallax&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 5, &quot;min&quot;: 0, &quot;max&quot;: 10, &quot;step&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;الحركة&quot;}, &quot;showIntro&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;الدخول&quot;}}">
 class Component extends DCLogic {
   state = { introVisible: true, focus: null, gbOpen: false, gbNotes: [], narrow: false, room: false, mapOpen: false, gbWarning: null };
@@ -538,7 +583,9 @@ class Component extends DCLogic {
     window.addEventListener('keydown', this.onKey);
     this.applyZoom = () => {
       this.scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      this.zoom = Math.min(1, Math.max(0.42, window.innerWidth / 1250));
+      // Was floor 0.42: on a 390px phone that rendered the painting captions
+      // at 3-5 CSS pixels. Keep more of the scene legible on small screens.
+      this.zoom = Math.min(1, Math.max(0.62, window.innerWidth / 1250));
       if (this.lookRef.current) this.lookRef.current.style.transform = 'rotateY(' + this.ry.toFixed(2) + 'deg) rotateX(' + this.rx.toFixed(2) + 'deg) scale(' + this.zoom.toFixed(3) + ')';
       this._needsPass = true;
       const narrow = window.innerWidth < 760;
@@ -557,15 +604,15 @@ class Component extends DCLogic {
       this.setState({ gbWarning: 'ما قدرنا نقرأ التواقيع المحفوظة عهالمتصفح.' });
     }
 
-    this.onTouchStart = (e) => { this.touchY = e.touches[0].clientY; this.touchX = e.touches[0].clientX; };
+    // Walking is driven by native scroll; touch only steers the parallax.
+    // (touchX/touchY used to be recorded here and never read - dropped.)
     this.onTouchMove = (e) => {
-      if (this.state.focus != null) return;
+      if (this.state.focus != null || this.state.mapOpen || this.state.gbOpen) return;
       const t = e.touches[0];
+      if (!t) return;
       const px = (this.props.parallax ?? 5) / 5;
       this.tRy = ((t.clientX / window.innerWidth) - 0.5) * -7 * px;
-      this.touchY = t.clientY; this.touchX = t.clientX;
     };
-    window.addEventListener('touchstart', this.onTouchStart, { passive: true });
     window.addEventListener('touchmove', this.onTouchMove, { passive: true });
     this.onTilt = (e) => {
       if (e.gamma == null || this.state.focus != null) return;
@@ -573,6 +620,9 @@ class Component extends DCLogic {
       this.tRy = Math.max(-9, Math.min(9, -e.gamma * 0.28)) * px;
       this.tRx = Math.max(-5, Math.min(5, (e.beta - 45) * 0.1)) * px;
     };
+    // iOS 13+ only delivers this after an explicit grant, which needs a user
+    // gesture; without one the listener is inert there. Register it anyway for
+    // Android/desktop, where it works, and never depend on it for navigation.
     window.addEventListener('deviceorientation', this.onTilt);
     this.onMove = (e) => {
       // Same guard touchmove and deviceorientation already had: with the info
@@ -678,7 +728,6 @@ class Component extends DCLogic {
     window.removeEventListener('scroll', this.onScroll);
     window.removeEventListener('pointermove', this.onMove);
     window.removeEventListener('keydown', this.onKey);
-    window.removeEventListener('touchstart', this.onTouchStart);
     window.removeEventListener('touchmove', this.onTouchMove);
     window.removeEventListener('deviceorientation', this.onTilt);
     // Every pending setTimeout, or they fire into an unmounted tree.
