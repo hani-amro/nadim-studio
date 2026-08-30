@@ -1,0 +1,150 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens.
+ *
+ * The contrast values below are the corrected ones: the previous build used
+ * #7d766b (4.40:1), #6b5d42 (2.93:1) and #8a6a2e (3.41:1) for body copy, all
+ * of which fail WCAG AA. The `muted` tokens here are the AA-passing
+ * replacements, measured against their actual backgrounds.
+ */
+@theme {
+  --color-ink: #f1ece4;
+  --color-ink-museum: #efe7d8;
+
+  --color-canvas: #0c0a09;
+  --color-canvas-museum: #0a0806;
+  --color-canvas-sculpt: #0e0a06;
+  --color-panel: #17140f;
+  --color-panel-museum: #17100a;
+  --color-panel-deep: #241a0c;
+
+  --color-brand-red: #d43d2a;
+  --color-brand-blue: #2b50c8;
+  --color-brand-gold: #d9a441;
+  --color-brand-gold-bright: #ffe9b0;
+
+  /* AA-passing muted text (6.7:1 on canvas, 8.5:1 on museum canvas). */
+  --color-muted: #9d958a;
+  --color-muted-museum: #b8a884;
+  --color-muted-dim: #a8977a;
+  --color-line: #2a2622;
+  --color-line-museum: #3a2e1a;
+
+  --font-display: Amiri, 'Times New Roman', serif;
+  --font-sans: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  /* Focus must always be visible; the old build set outline:none on the
+     guest-book fields with nothing in its place. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-gold-bright);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-brand-red);
+    color: #fff;
+  }
+}
+
+@utility sr-only-focusable {
+  position: absolute;
+  inset-inline-start: -9999px;
+  top: 0;
+  &:focus {
+    inset-inline-start: 0.5rem;
+    top: 0.5rem;
+  }
+}
+
+/* -- animations -------------------------------------------------------- */
+@keyframes introFade {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dripGrow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes pulseHint {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes titleLine {
+  0% { opacity: 0; transform: translateY(20px); }
+  12% { opacity: 1; transform: translateY(0); }
+  30% { opacity: 1; }
+  40% { opacity: 0; transform: translateY(-14px); }
+  100% { opacity: 0; }
+}
+@keyframes titleStay {
+  0%, 55% { opacity: 0; transform: scale(1.18); filter: blur(10px); }
+  78%, 100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes btnIn {
+  0%, 80% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes dust {
+  0% { transform: translateY(0); opacity: 0; }
+  12% { opacity: 0.8; }
+  88% { opacity: 0.5; }
+  100% { transform: translateY(-46vh); opacity: 0; }
+}
+@keyframes plusPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes brushIn {
+  from { width: 0; opacity: 0; }
+  30% { opacity: 1; }
+  to { width: 100%; opacity: 1; }
+}
+@keyframes worldIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateX(60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes panelInUp {
+  from { opacity: 0; transform: translateY(70px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/*
+ * The whole site is motion — a scroll-driven 3D camera, infinite dust and
+ * pulses. None of it was gated before, which is a genuine accessibility
+ * failure for anyone with vestibular sensitivity.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
+}
