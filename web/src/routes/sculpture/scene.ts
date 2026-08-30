@@ -175,7 +175,9 @@ export function createStage(host: HTMLElement): Stage {
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  // PCFSoftShadowMap is deprecated in three r185 and silently falls back to
+  // PCFShadowMap while logging a console warning. Ask for it directly.
+  renderer.shadowMap.type = THREE.PCFShadowMap
   renderer.domElement.style.display = 'block'
   host.appendChild(renderer.domElement)
 
