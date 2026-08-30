@@ -91,6 +91,7 @@ const ar = {
   mapRotunda: 'القاعة الدائرية',
   mapInventory: '٨ لوحات · غرفة دراسات · قاعة نحت · دفتر زوار',
   mapKeys: 'استعمل الأسهم أو السكرول للتنقل · Enter يفتح أقرب لوحة · Escape يرجّعك',
+  mapZoomHint: 'اكبس لتكبير المخطط',
   mapClose: 'إغلاق المخطط',
   wing1: 'صخب اللون',
   wing2: 'همس المادة',
@@ -99,6 +100,7 @@ const ar = {
   studiesRoom: 'غرفة الدراسات',
   studiesEnter: 'ادخل غرفة الدراسات',
   studiesHint: 'دراسات ورق',
+  studiesLatin: 'STUDIES',
   studiesBack: '↩ رجوع للممر',
   studyAlt: 'دراسة ورق رقم',
   sculptureRoom: 'قاعة النحت',
@@ -134,6 +136,9 @@ const ar = {
   sculptKicker: 'قاعة النحت',
   sculptLatin: 'SCULPTURE ROOM',
   sculptName: 'الضربة',
+  /** The caption's medium; its numbers come from SCULPTURE + localeNum. */
+  sculptMedium: 'برونز على رخام',
+  sculptSpin: 'دوران تلقائي',
   sculptQuote: '« أول ضربة فرشاة بتكون دايماً بالهوا قبل ما تلمس القماش. حاولت جمّدها بالبرونز. »',
   sculptHint: 'اسحب (أو بإصبعك) لتلف حول التمثال · قرّب بدولاب الماوس أو بإصبعين',
   sculptBackMuseum: '↩ رجوع للمتحف',
@@ -231,6 +236,7 @@ const en: Strings = {
   mapRotunda: 'The rotunda',
   mapInventory: '8 paintings · study room · sculpture room · guest book',
   mapKeys: 'Arrows or scroll to move · Enter opens the nearest painting · Escape goes back',
+  mapZoomHint: 'Click to enlarge the map',
   mapClose: 'Close the map',
   wing1: 'The clamour of colour',
   wing2: 'The whisper of matter',
@@ -239,6 +245,7 @@ const en: Strings = {
   studiesRoom: 'The study room',
   studiesEnter: 'Enter the study room',
   studiesHint: 'Works on paper',
+  studiesLatin: 'STUDIES',
   studiesBack: '↩ Back to the corridor',
   studyAlt: 'Study on paper number',
   sculptureRoom: 'The sculpture room',
@@ -272,6 +279,8 @@ const en: Strings = {
   sculptKicker: 'Sculpture room',
   sculptLatin: 'SCULPTURE ROOM',
   sculptName: 'The Stroke',
+  sculptMedium: 'Bronze on marble',
+  sculptSpin: 'Auto-rotate',
   sculptQuote: '“The first brushstroke is always in the air before it touches the canvas. I tried to freeze it in bronze.”',
   sculptHint: 'Drag (or swipe) to circle the sculpture · zoom with the wheel or two fingers',
   sculptBackMuseum: '↩ Back to the museum',
@@ -339,6 +348,11 @@ export function captionMeta(a: Artwork, t: Strings, lang: Lang): string {
 /** "١٢٠ × ٩٠ سم" / "120 × 90 cm" */
 export function sizeLabel(a: Artwork, t: Strings, lang: Lang): string {
   return `${localeNum(a.size.w, lang)} × ${localeNum(a.size.h, lang)} ${t.cm}`
+}
+
+/** "٠١" / "01" — two digits in the numeral system of the active language. */
+export function orderLabel(order: number, lang: Lang): string {
+  return localeNum(order, lang).padStart(2, lang === 'ar' ? '٠' : '0')
 }
 
 export function title(a: Artwork, lang: Lang): string {

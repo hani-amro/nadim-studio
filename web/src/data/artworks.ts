@@ -34,7 +34,7 @@ export const ARTWORKS: readonly Artwork[] = [
   { id: 'inner-noise', order: 5, file: 'art5.png', medium: 'oil', year: 2025, size: { w: 120, h: 80 }, inGallery: true },
   { id: 'ash-dance', order: 6, file: 'art6.png', medium: 'acrylic', year: 2021, size: { w: 100, h: 100 }, inGallery: false },
   { id: 'window-for-light', order: 7, file: 'art7.png', medium: 'oil', year: 2020, size: { w: 80, h: 60 }, inGallery: false },
-  { id: 'untitled-7', order: 8, file: 'art8.png', medium: 'acrylic', year: 2019, size: { w: 150, h: 110 }, inGallery: false },
+  { id: 'untitled-7', order: 8, file: 'art8.png', medium: 'acrylic', year: 2019, size: { w: 150, h: 110 }, inGallery: true },
 ] as const
 
 /** Corridor geometry — one place, so the HUD counter and the keyboard
