@@ -1,21 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>المتحف السينمائي — مرسَم نديم</title>
+<meta name="description" content="جولة ثلاثية الأبعاد بين ثمان لوحات للفنان نديم، مع غرفة دراسات وقاعة نحت ودفتر زوار.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0806'/%3E%3Crect x='8' y='7' width='16' height='18' fill='none' stroke='%23d9a441' stroke-width='2'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0a0806">
+<meta property="og:type" content="website">
+<meta property="og:title" content="المتحف السينمائي — مرسَم نديم">
+<meta property="og:description" content="جولة ثلاثية الأبعاد بين ثمان لوحات — امشِ بالممر وقرّب على أي لوحة.">
+<meta property="og:image" content="./paintings/art1.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,700;1,400&family=IBM+Plex+Sans+Arabic:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="./image-slot.js"></script>
 <style>
 html, body { margin: 0; padding: 0; background: #0a0806; }
-body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+body { font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif; }
+:focus-visible { outline: 2px solid #ffe9b0; outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 a { color: #d9a441; text-decoration: none; }
 a:hover { color: #edc76f; }
 @keyframes titleLine { 0% { opacity: 0; transform: translateY(20px); } 12% { opacity: 1; transform: translateY(0); } 30% { opacity: 1; } 40% { opacity: 0; transform: translateY(-14px); } 100% { opacity: 0; } }
@@ -33,6 +44,21 @@ a:hover { color: #edc76f; }
 @keyframes worldIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes worldZoom { from { transform: scale(1); } to { transform: scale(1.14); } }
 @keyframes brushIn { from { width: 0; opacity: 0; } 30% { opacity: 1; } to { width: 100%; opacity: 1; } }
+
+/* -- احترام تفضيل تقليل الحركة -- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+  html { scroll-behavior: auto !important; }
+}
+
+/* -- الجوال: شريط الحالة السفلي ما بيتحمل عرض الديسكتوب -- */
+@media (max-width: 760px) {
+  .m-hud-hint { display: none; }
+  .m-hud-rail { width: 96px; }
+}
 </style>
 </helmet>
 <div dir="rtl" style="background: #0a0806; color: #efe7d8; position: relative; height: 950vh">
@@ -81,7 +107,7 @@ a:hover { color: #edc76f; }
         </div>
 
         <div data-bay="-5400" style="position: absolute; left: 50%; top: 50%; transform-style: preserve-3d; pointer-events: none">
-          <div onClick="{{ enterRoom }}" style="position: absolute; left: 50%; top: 50%; width: 440px; height: 700px; margin: -400px -220px; transform: translateX(-878px) translateZ(-5400px) rotateY(90deg) translateZ(6px); backface-visibility: hidden; border: 4px solid rgba(217,164,65,.6); border-radius: 220px 220px 0 0; box-sizing: border-box; background: radial-gradient(ellipse at 50% 100%, rgba(255,214,130,.42), rgba(255,214,130,.08) 55%, transparent 78%), linear-gradient(180deg, #050302, #150e07 55%, #2b2012); cursor: pointer; pointer-events: auto">
+          <div onClick="{{ enterRoom }}" onKeyDown="{{ activateKey }}" role="button" tabindex="0" aria-label="ادخل غرفة الدراسات" style="position: absolute; left: 50%; top: 50%; width: 440px; height: 700px; margin: -400px -220px; transform: translateX(-878px) translateZ(-5400px) rotateY(90deg) translateZ(6px); backface-visibility: hidden; border: 4px solid rgba(217,164,65,.6); border-radius: 220px 220px 0 0; box-sizing: border-box; background: radial-gradient(ellipse at 50% 100%, rgba(255,214,130,.42), rgba(255,214,130,.08) 55%, transparent 78%), linear-gradient(180deg, #050302, #150e07 55%, #2b2012); cursor: pointer; pointer-events: auto">
             <div style="position: absolute; left: 0; right: 0; bottom: 84px; text-align: center">
               <p style="margin: 0 0 4px; font-size: 12px; color: #9a8a68">تفضّل</p>
               <p style="margin: 0; font-family: Amiri, serif; font-size: 34px; font-weight: 700; color: #efe7d8">غرفة الدراسات</p>
@@ -102,17 +128,17 @@ a:hover { color: #edc76f; }
             </div>
             <div style="position: absolute; left: 200px; top: 300px; width: 270px; height: 300px; background: #d9a441; padding: 3px; box-sizing: border-box">
               <div style="position: absolute; inset: 3px; background: #241a0c">
-                <image-slot id="study-1" shape="rect" placeholder="اسحب رسمة" style="position: absolute; inset: 10px"></image-slot>
+                <image-slot id="study-1" shape="rect" role="img" aria-label="دراسة ورق رقم 1" placeholder="دراسة 1" style="position: absolute; inset: 10px"></image-slot>
               </div>
             </div>
             <div style="position: absolute; left: 615px; top: 300px; width: 270px; height: 300px; background: #d9a441; padding: 3px; box-sizing: border-box">
               <div style="position: absolute; inset: 3px; background: #241a0c">
-                <image-slot id="study-2" shape="rect" placeholder="اسحب رسمة" style="position: absolute; inset: 10px"></image-slot>
+                <image-slot id="study-2" shape="rect" role="img" aria-label="دراسة ورق رقم 2" placeholder="دراسة 2" style="position: absolute; inset: 10px"></image-slot>
               </div>
             </div>
             <div style="position: absolute; left: 1030px; top: 300px; width: 270px; height: 300px; background: #d9a441; padding: 3px; box-sizing: border-box">
               <div style="position: absolute; inset: 3px; background: #241a0c">
-                <image-slot id="study-3" shape="rect" placeholder="اسحب رسمة" style="position: absolute; inset: 10px"></image-slot>
+                <image-slot id="study-3" shape="rect" role="img" aria-label="دراسة ورق رقم 3" placeholder="دراسة 3" style="position: absolute; inset: 10px"></image-slot>
               </div>
             </div>
           </div>
@@ -151,7 +177,7 @@ a:hover { color: #edc76f; }
         </div>
 
         <div data-bay="-12500" style="position: absolute; left: 50%; top: 50%; transform-style: preserve-3d; pointer-events: none">
-          <div onClick="{{ openGuestbook }}" style="position: absolute; left: 50%; top: 50%; width: 360px; height: 520px; margin: -180px -180px; transform: translateX(520px) translateZ(-12500px) rotateY(-26deg); transform-style: preserve-3d; cursor: pointer; pointer-events: auto">
+          <div onClick="{{ openGuestbook }}" onKeyDown="{{ activateKey }}" role="button" tabindex="0" aria-label="افتح دفتر الزوار" style="position: absolute; left: 50%; top: 50%; width: 360px; height: 520px; margin: -180px -180px; transform: translateX(520px) translateZ(-12500px) rotateY(-26deg); transform-style: preserve-3d; cursor: pointer; pointer-events: auto">
             <div style="position: absolute; left: 50%; top: 200px; width: 74px; height: 340px; margin-left: -37px; background: linear-gradient(90deg, #17100a, #4a3c22 45%, #1d1409)"></div>
             <div style="position: absolute; left: 50%; top: 520px; width: 210px; height: 150px; margin-left: -105px; transform: rotateX(-90deg); transform-origin: top center; background: radial-gradient(ellipse at 50% 0%, #3a2e1a, #120c06 78%)"></div>
             <div style="position: absolute; left: 50%; top: 0; width: 340px; height: 230px; margin-left: -170px; transform: rotateX(-56deg); transform-origin: bottom center; background: linear-gradient(180deg, #4a3c22, #241a0c); border-top: 3px solid #d9a441; box-sizing: border-box; padding: 14px">
@@ -171,7 +197,7 @@ a:hover { color: #edc76f; }
           <div style="position: absolute; left: 50%; top: 50%; transform: translateX(520px) translateZ(-1500px) rotateY(-26deg); transform-style: preserve-3d">
           <div style="position: absolute; left: 50%; top: 340px; width: 170px; height: 120px; margin-left: -85px; transform: rotateX(-90deg); transform-origin: top center; background: radial-gradient(ellipse at 50% 0%, #4a3c22, #120c06 76%)"></div>
           <div style="position: absolute; left: 50%; top: 44px; width: 26px; height: 296px; margin-left: -13px; background: linear-gradient(90deg, #241a0c, #b58a3c 45%, #3a2e1a)"></div>
-          <div onClick="{{ openMap }}" style="position: absolute; left: 50%; top: -346px; width: 560px; height: 390px; margin-left: -280px; background: linear-gradient(160deg, #d9a441, #8a6a2e 55%, #b58a3c); padding: 4px; box-sizing: border-box; box-shadow: 0 26px 40px rgba(0,0,0,.6); cursor: pointer; pointer-events: auto">
+          <div onClick="{{ openMap }}" onKeyDown="{{ activateKey }}" role="button" tabindex="0" aria-label="افتح مخطط المعرض" style="position: absolute; left: 50%; top: -346px; width: 560px; height: 390px; margin-left: -280px; background: linear-gradient(160deg, #d9a441, #8a6a2e 55%, #b58a3c); padding: 4px; box-sizing: border-box; box-shadow: 0 26px 40px rgba(0,0,0,.6); cursor: pointer; pointer-events: auto">
             <div style="position: absolute; inset: 4px; background: linear-gradient(160deg, #241a0c, #120c06); padding: 28px 30px; box-sizing: border-box">
               <p style="margin: 0; font-family: Amiri, serif; font-size: 30px; font-weight: 700; color: #efe7d8">مخطط المعرض</p>
               <p style="margin: 6px 0 26px; font-size: 14px; letter-spacing: 3px; color: #9a8a68">GALLERY MAP</p>
@@ -195,7 +221,7 @@ a:hover { color: #edc76f; }
                 <span>الجناح الأول · صخب اللون</span>
                 <span>الجناح التاني · همس المادة</span>
               </div>
-              <p style="margin: 20px 0 0; font-size: 14px; color: #8d7c58">٨ لوحات · غرفة دراسات · قاعة نحت · دفتر زوار</p>
+              <p style="margin: 20px 0 0; font-size: 14px; color: #b8a884">٨ لوحات · غرفة دراسات · قاعة نحت · دفتر زوار</p>
               <p style="margin: 12px 0 0; font-size: 13px; color: #d9a441">اكبس لتكبير المخطط</p>
             </div>
           </div>
@@ -203,7 +229,7 @@ a:hover { color: #edc76f; }
         </div>
 
         <sc-for list="{{ paintings }}" as="p" hint-placeholder-count="8">
-          <div data-z="{{ p.z }}" onClick="{{ p.open }}" style="position: absolute; left: 50%; top: 50%; width: 680px; height: 700px; margin: -400px -340px; transform: {{ p.transform }}; transform-style: preserve-3d; cursor: pointer">
+          <div data-z="{{ p.z }}" onClick="{{ p.open }}" onKeyDown="{{ activateKey }}" role="button" tabindex="0" aria-label="{{ p.openLabel }}" style="position: absolute; left: 50%; top: 50%; width: 680px; height: 700px; margin: -400px -340px; transform: {{ p.transform }}; transform-style: preserve-3d; cursor: pointer">
             <div style="position: absolute; top: -150px; left: 50%; width: 640px; height: 470px; margin-left: -320px; background: radial-gradient(ellipse 48% 58% at 50% 0%, rgba(255,214,130,.5), rgba(255,214,130,.12) 55%, transparent 78%); pointer-events: none"></div>
             <div data-glow="1" style="position: absolute; top: 30px; left: 50%; width: 700px; height: 580px; transform: translateX(-50%) translateZ(-14px); background: radial-gradient(ellipse, rgba(255,214,130,.45), transparent 64%); opacity: 0; pointer-events: none"></div>
             <div style="position: absolute; top: 30px; {{ p.numSide }}: -150px; font-family: Amiri, serif; font-size: 300px; font-weight: 700; line-height: 1; color: rgba(217,164,65,.14); transform: translateZ(-90px); pointer-events: none">{{ p.bigNum }}</div>
@@ -213,9 +239,9 @@ a:hover { color: #edc76f; }
             <div style="position: absolute; top: 56px; left: 50%; transform: translateX(-50%); width: 620px; background: #d9a441; padding: 3px; box-shadow: 0 20px 44px rgba(0,0,0,.8)">
               <div style="background: #241a0c; padding: 14px">
                 <div style="border: 1px solid rgba(217,164,65,.6); padding: 10px; background: #0b0805; position: relative">
-                  <image-slot id="{{ p.id }}" shape="rect" src="{{ p.src }}" placeholder="{{ p.ph }}" style="width: 100%; height: 440px; pointer-events: auto"></image-slot>
+                  <image-slot id="{{ p.id }}" shape="rect" src="{{ p.src }}" role="img" aria-label="{{ p.alt }}" placeholder="{{ p.ph }}" style="width: 100%; height: 440px; pointer-events: auto"></image-slot>
                   <div style="position: absolute; inset: 10px; pointer-events: none; background: linear-gradient(90deg, rgba(0,0,0,.36), rgba(0,0,0,.1) 18%, rgba(255,246,224,.05) 44%, rgba(255,246,224,.05) 56%, rgba(0,0,0,.12) 82%, rgba(0,0,0,.32)), linear-gradient(180deg, rgba(255,238,196,.07), transparent 26%)"></div>
-                  <div onClick="{{ p.open }}" data-catcher="{{ p.idx }}" style="position: absolute; inset: 0; cursor: pointer; pointer-events: auto">
+                  <div onClick="{{ p.open }}" data-catcher="{{ p.idx }}" aria-hidden="true" style="position: absolute; inset: 0; cursor: pointer; pointer-events: auto">
                     <span style="position: absolute; bottom: 14px; left: 14px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid #d9a441; color: #d9a441; background: rgba(10,8,6,.65); display: flex; align-items: center; justify-content: center; font-size: 20px; animation: plusPulse 2.4s ease-out infinite">+</span>
                   </div>
                 </div>
@@ -262,7 +288,7 @@ a:hover { color: #edc76f; }
               <div style="position: absolute; top: -20%; left: -40%; width: 60%; height: 140%; background: linear-gradient(105deg, transparent 44%, rgba(239,231,216,.07) 50%, transparent 56%); transform: rotate(4deg)"></div>
               <p style="margin: 0; font-size: 15px; color: #9a8a68">آخر لوحة بالمعرض:</p>
               <p style="margin: 0; font-family: Amiri, serif; font-size: 120px; font-weight: 700; color: #efe7d8; text-shadow: 0 0 50px rgba(255,214,130,.35)">أنت</p>
-              <p style="margin: 0; font-size: 12px; color: #6b5d42">قرّب… شوف مين واقف بالإطار</p>
+              <p style="margin: 0; font-size: 12px; color: #a8977a">قرّب… شوف مين واقف بالإطار</p>
             </div>
           </div>
         </div>
@@ -292,31 +318,31 @@ a:hover { color: #edc76f; }
 
   <div style="position: fixed; top: 0; left: 0; right: 0; height: 52px; background: #000; z-index: 20"></div>
   <div style="position: fixed; bottom: 0; left: 0; right: 0; height: 52px; background: #000; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; box-sizing: border-box">
-    <span style="font-size: 11px; color: #8d7c58; animation: hintPulse 2.8s ease-in-out infinite">اسحب لتحت أو استعمل الأسهم — <span style="letter-spacing: 3px">SCROLL TO WALK</span></span>
+    <span class="m-hud-hint" style="font-size: 11px; color: #b8a884; animation: hintPulse 2.8s ease-in-out infinite">مرّر لتحت أو استعمل الأسهم — <span style="letter-spacing: 3px">SCROLL TO WALK</span></span>
     <div style="display: flex; align-items: center; gap: 14px">
       <button onClick="{{ openMap }}" title="مخطط المعرض" style="font-family: inherit; background: none; border: 1px solid #3a2e1a; color: #d9a441; font-size: 11px; padding: 5px 12px; cursor: pointer" style-hover="border-color: #d9a441">المخطط</button>
       <span ref="{{ counterRef }}" dir="ltr" style="font-size: 12px; color: #d9a441; min-width: 44px; text-align: left; display: inline-block">1 / 8</span>
-      <div style="width: 220px; height: 2px; background: #2b2012"><div ref="{{ progressRef }}" style="width: 0%; height: 100%; background: linear-gradient(90deg, #d9a441, #ffe9b0)"></div></div>
+      <div class="m-hud-rail" role="progressbar" aria-label="تقدّمك بالجولة" style="width: 220px; height: 2px; background: #2b2012"><div ref="{{ progressRef }}" style="width: 0%; height: 100%; background: linear-gradient(90deg, #d9a441, #ffe9b0)"></div></div>
     </div>
   </div>
 
   <div style="position: fixed; top: 52px; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 18px 28px">
-    <div style="font-family: Amiri, serif; font-size: 21px; color: #efe7d8; position: relative; display: inline-block">مرسَم نديم <span style="color: #d9a441">·</span> <span style="font-size: 12px; letter-spacing: 3px; color: #9a8a68">NADIM STUDIO</span>
+    <h1 id="museum-title" tabindex="-1" style="margin: 0; font-family: Amiri, serif; font-weight: 700; font-size: 21px; color: #efe7d8; position: relative; display: inline-block; outline: none">مرسَم نديم <span style="color: #d9a441">·</span> <span style="font-size: 12px; letter-spacing: 3px; color: #b8a884">NADIM STUDIO</span>
       <div style="position: absolute; bottom: -6px; right: 0; height: 3px; background: linear-gradient(90deg, transparent, #d9a441 30%, #ffe9b0 60%, #d9a441); transform: skewX(-24deg); animation: brushIn 1.5s .4s cubic-bezier(.2,.8,.2,1) both"></div>
-    </div>
+    </h1>
     <a href="mailto:hello@example.com" style="font-size: 13px">تواصل</a>
   </div>
 
   <sc-if value="{{ mapOpen }}" hint-placeholder-val="{{ false }}">
-    <div style="position: fixed; inset: 0; z-index: 62; background: rgba(5,4,3,.93); display: flex; align-items: center; justify-content: center; padding: 24px">
+    <div role="dialog" aria-modal="true" aria-labelledby="map-title" style="position: fixed; inset: 0; z-index: 62; background: rgba(5,4,3,.93); display: flex; align-items: center; justify-content: center; padding: 24px">
       <div style="width: 880px; max-width: 94vw; background: linear-gradient(160deg, #d9a441, #8a6a2e 55%, #b58a3c); padding: 4px">
         <div style="background: linear-gradient(160deg, #241a0c, #120c06); padding: 32px 38px">
           <div style="display: flex; justify-content: space-between; align-items: baseline">
             <div>
-              <h3 style="margin: 0; font-family: Amiri, serif; font-size: 34px; color: #efe7d8">مخطط المعرض</h3>
+              <h2 id="map-title" style="margin: 0; font-family: Amiri, serif; font-size: 34px; color: #efe7d8">مخطط المعرض</h2>
               <p style="margin: 6px 0 0; font-size: 12px; letter-spacing: 4px; color: #9a8a68">GALLERY MAP · NADIM STUDIO</p>
             </div>
-            <button onClick="{{ closeMap }}" style="font-family: inherit; background: none; border: none; color: #9a8a68; font-size: 24px; cursor: pointer">✕</button>
+            <button onClick="{{ closeMap }}" aria-label="إغلاق المخطط" style="font-family: inherit; background: none; border: none; color: #b8a884; font-size: 24px; cursor: pointer; min-width: 44px; min-height: 44px">✕</button>
           </div>
           <div style="position: relative; height: 260px; margin: 30px 0 10px">
             <div style="position: absolute; left: 0; right: 0; top: 112px; height: 38px; background: linear-gradient(90deg, rgba(217,164,65,.16), rgba(217,164,65,.07)); border-top: 1px solid rgba(217,164,65,.45); border-bottom: 1px solid rgba(217,164,65,.45)"></div>
@@ -325,16 +351,16 @@ a:hover { color: #edc76f; }
             <div style="position: absolute; right: 8px; top: 230px; font-size: 12px; color: #d9a441">المدخل</div>
             <div style="position: absolute; left: 8px; top: 230px; font-size: 12px; color: #d9a441">النهاية · دفتر الزوار</div>
             <div style="position: absolute; right: 6%; left: 10%; top: 34px; display: flex; justify-content: space-between">
-              <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠٧</div><div style="font-size: 11px; color: #cbbc98">نافذة للضو</div></div>
-              <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠٥</div><div style="font-size: 11px; color: #cbbc98">ضجيج داخلي</div></div>
-              <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠٣</div><div style="font-size: 11px; color: #cbbc98">ذاكرة صدفة</div></div>
               <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠١</div><div style="font-size: 11px; color: #cbbc98">انفجار هادي</div></div>
+              <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠٣</div><div style="font-size: 11px; color: #cbbc98">ذاكرة صدفة</div></div>
+              <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠٥</div><div style="font-size: 11px; color: #cbbc98">ضجيج داخلي</div></div>
+              <div style="text-align: center"><div style="font-family: Amiri, serif; font-size: 20px; color: #d9a441">٠٧</div><div style="font-size: 11px; color: #cbbc98">نافذة للضو</div></div>
             </div>
             <div style="position: absolute; right: 6%; left: 10%; top: 168px; display: flex; justify-content: space-between">
-              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">بلا عنوان ٧</div><div style="font-family: Amiri, serif; font-size: 20px; color: #8a6a2e">٠٨</div></div>
-              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">رقصة رماد</div><div style="font-family: Amiri, serif; font-size: 20px; color: #8a6a2e">٠٦</div></div>
-              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">حيطان قديمة</div><div style="font-family: Amiri, serif; font-size: 20px; color: #8a6a2e">٠٤</div></div>
-              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">أزرق يصرخ</div><div style="font-family: Amiri, serif; font-size: 20px; color: #8a6a2e">٠٢</div></div>
+              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">أزرق يصرخ</div><div style="font-family: Amiri, serif; font-size: 20px; color: #c9a45e">٠٢</div></div>
+              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">حيطان قديمة</div><div style="font-family: Amiri, serif; font-size: 20px; color: #c9a45e">٠٤</div></div>
+              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">رقصة رماد</div><div style="font-family: Amiri, serif; font-size: 20px; color: #c9a45e">٠٦</div></div>
+              <div style="text-align: center"><div style="font-size: 11px; color: #cbbc98">بلا عنوان ٧</div><div style="font-family: Amiri, serif; font-size: 20px; color: #c9a45e">٠٨</div></div>
             </div>
             <div style="position: absolute; right: 46%; top: 104px; width: 54px; height: 54px; border: 2px solid #d9a441; border-radius: 50%; background: rgba(217,164,65,.1)"></div>
             <div style="position: absolute; right: 36%; top: 236px; text-align: center; font-size: 11px; color: #d8c9a4">قاعة النحت</div>
@@ -362,22 +388,27 @@ a:hover { color: #edc76f; }
   </sc-if>
 
   <sc-if value="{{ gbOpen }}" hint-placeholder-val="{{ false }}">
-    <div style="position: fixed; inset: 0; z-index: 60; background: rgba(5,4,3,.9); display: flex; align-items: center; justify-content: center; padding: 24px">
+    <div role="dialog" aria-modal="true" aria-labelledby="gb-title" style="position: fixed; inset: 0; z-index: 60; background: rgba(5,4,3,.9); display: flex; align-items: center; justify-content: center; padding: 24px">
       <div style="width: 560px; max-width: 94vw; max-height: 82vh; overflow: auto; background: #17100a; border: 1px solid #4a3c22; padding: 36px 40px">
         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px">
-          <h3 style="margin: 0; font-family: Amiri, serif; font-size: 34px; color: #efe7d8">دفتر الزوار</h3>
-          <button onClick="{{ closeGuestbook }}" style="font-family: inherit; background: none; border: none; color: #9a8a68; font-size: 22px; cursor: pointer">✕</button>
+          <h2 id="gb-title" style="margin: 0; font-family: Amiri, serif; font-size: 34px; color: #efe7d8">دفتر الزوار</h2>
+          <button onClick="{{ closeGuestbook }}" aria-label="إغلاق دفتر الزوار" style="font-family: inherit; background: none; border: none; color: #b8a884; font-size: 22px; cursor: pointer; min-width: 44px; min-height: 44px">✕</button>
         </div>
-        <p style="margin: 0 0 24px; font-size: 13px; color: #9a8a68">اترك أثرك بالمعرض — كلمة، إحساس، أو بس اسمك</p>
+        <p style="margin: 0 0 24px; font-size: 13px; color: #b8a884">اكتب كلمتك — بتنحفظ عهالجهاز لحالك، بترجع تلاقيها لما تفوت من جديد</p>
         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px">
-          <input ref="{{ gbNameRef }}" placeholder="اسمك" style="font-family: inherit; font-size: 15px; padding: 12px 16px; background: #0d0a07; border: 1px solid #3a2e1a; color: #efe7d8; outline: none">
-          <textarea ref="{{ gbTextRef }}" placeholder="كلمتك…" rows="3" style="font-family: inherit; font-size: 15px; padding: 12px 16px; background: #0d0a07; border: 1px solid #3a2e1a; color: #efe7d8; outline: none; resize: vertical"></textarea>
-          <button onClick="{{ addNote }}" style="font-family: inherit; font-size: 15px; padding: 12px; background: #d9a441; border: none; color: #0b0805; cursor: pointer; font-weight: 500" style-hover="background: #ffe9b0">وقّع</button>
+          <label for="gb-name" class="sr-only">اسمك</label>
+          <input id="gb-name" ref="{{ gbNameRef }}" placeholder="اسمك" autocomplete="name" style="font-family: inherit; font-size: 16px; padding: 12px 16px; background: #0d0a07; border: 1px solid #3a2e1a; color: #efe7d8" style-focus-visible="outline: 2px solid #ffe9b0; outline-offset: 2px">
+          <label for="gb-text" class="sr-only">كلمتك</label>
+          <textarea id="gb-text" ref="{{ gbTextRef }}" placeholder="كلمتك…" rows="3" style="font-family: inherit; font-size: 16px; padding: 12px 16px; background: #0d0a07; border: 1px solid #3a2e1a; color: #efe7d8; resize: vertical" style-focus-visible="outline: 2px solid #ffe9b0; outline-offset: 2px"></textarea>
+          <button onClick="{{ addNote }}" style="font-family: inherit; font-size: 16px; padding: 14px; background: #d9a441; border: none; color: #0b0805; cursor: pointer; font-weight: 500; min-height: 44px" style-hover="background: #ffe9b0">وقّع</button>
+          <sc-if value="{{ gbWarning }}" hint-placeholder-val="{{ false }}">
+            <p role="status" aria-live="polite" style="margin: 0; font-size: 13px; color: #ffb4a2; border: 1px solid #7a1420; padding: 10px 14px">{{ gbWarning }}</p>
+          </sc-if>
         </div>
         <sc-for list="{{ gbNotes }}" as="n" hint-placeholder-count="0">
-          <div style="border-right: 2px solid #d9a441; padding: 10px 16px; margin-bottom: 12px; background: rgba(217,164,65,.05)">
+          <div style="border-inline-start: 2px solid #d9a441; padding: 10px 16px; margin-bottom: 12px; background: rgba(217,164,65,.05)">
             <p style="margin: 0 0 4px; font-family: Amiri, serif; font-size: 17px; color: #efe7d8">{{ n.text }}</p>
-            <p style="margin: 0; font-size: 12px; color: #9a8a68">— {{ n.name }}</p>
+            <p style="margin: 0; font-size: 12px; color: #b8a884">— {{ n.name }}</p>
           </div>
         </sc-for>
       </div>
@@ -408,7 +439,7 @@ a:hover { color: #edc76f; }
   </sc-if>
 
   <sc-if value="{{ introVisible }}" hint-placeholder-val="{{ true }}">
-    <div style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden">
+    <div role="dialog" aria-modal="true" aria-labelledby="museum-intro-title" style="position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden">
       <div ref="{{ doorLRef }}" style="position: absolute; top: 0; bottom: 0; right: 50%; width: 50.5%; background: linear-gradient(100deg, #2a1e0e, #1a1209 55%, #140d07); border-left: 2px solid #d9a441; box-shadow: inset -60px 0 100px rgba(0,0,0,.55)">
         <div style="position: absolute; top: 6%; bottom: 46%; left: 14%; right: 12%; border: 2px solid rgba(217,164,65,.42); background: linear-gradient(120deg, rgba(217,164,65,.06), transparent 60%); box-shadow: inset 0 0 40px rgba(0,0,0,.5)"></div>
         <div style="position: absolute; top: 58%; bottom: 8%; left: 14%; right: 12%; border: 2px solid rgba(217,164,65,.42); box-shadow: inset 0 0 40px rgba(0,0,0,.5)"></div>
@@ -422,7 +453,7 @@ a:hover { color: #edc76f; }
       <div ref="{{ introContentRef }}" style="position: relative; width: 100%; max-width: 720px; padding: 24px">
         <p style="position: absolute; left: 0; right: 0; top: -90px; margin: 0; font-size: 17px; word-spacing: 8px; color: #9a8a68; animation: titleLine 7s ease both">مرسَم نديم يقدّم</p>
         <p style="position: absolute; left: 0; right: 0; top: -90px; margin: 0; font-size: 17px; word-spacing: 8px; color: #9a8a68; animation: titleLine 7s 2.4s ease both">جولة لا تشبه المواقع</p>
-        <h1 style="margin: 0 0 18px; font-family: Amiri, serif; font-size: clamp(44px, 7vw, 84px); font-weight: 700; color: #efe7d8; animation: titleStay 8s ease both">فوت عَ عالم الرسم</h1>
+        <p id="museum-intro-title" style="margin: 0 0 18px; font-family: Amiri, serif; font-size: clamp(36px, 7vw, 84px); font-weight: 700; color: #efe7d8; animation: titleStay 8s ease both">فوت عَ عالم الرسم</p>
         <p style="margin: 0 0 48px; font-size: 15px; letter-spacing: 4px; color: #d9a441; animation: btnIn 9s ease both">A CINEMATIC GALLERY — ٢٠٢٦</p>
         <button onClick="{{ enter }}" style="font-family: inherit; font-size: 16px; padding: 16px 40px; background: none; border: 1px solid #d9a441; color: #d9a441; cursor: pointer; word-spacing: 4px; white-space: nowrap; animation: btnIn 9.5s ease both" style-hover="background: #d9a441; color: #000">ادخل المتحف</button>
       </div>
@@ -432,7 +463,7 @@ a:hover { color: #edc76f; }
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 900}, &quot;parallax&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 5, &quot;min&quot;: 0, &quot;max&quot;: 10, &quot;step&quot;: 1, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;الحركة&quot;}, &quot;showIntro&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;الدخول&quot;}}">
 class Component extends DCLogic {
-  state = { introVisible: true, focus: null, gbOpen: false, gbNotes: [], narrow: false, room: false, mapOpen: false };
+  state = { introVisible: true, focus: null, gbOpen: false, gbNotes: [], narrow: false, room: false, mapOpen: false, gbWarning: null };
   x = 0; targetX = 0; zoom = 1;
   doorLRef = React.createRef();
   doorRRef = React.createRef();
@@ -444,6 +475,19 @@ class Component extends DCLogic {
   progressRef = React.createRef();
   counterRef = React.createRef();
   cam = 0; target = 0; ry = 0; tRy = 0; rx = 0; tRx = 0;
+  // One source of truth for the corridor: painting i sits at FIRST + i * STEP.
+  static FIRST = 1100;
+  static STEP = 1400;
+  static COUNT = 8;
+  timers = new Set();
+
+  /** setTimeout that is cancelled on unmount instead of firing into a dead tree. */
+  later(fn, ms) {
+    const id = setTimeout(() => { this.timers.delete(id); fn(); }, ms);
+    this.timers.add(id);
+    return id;
+  }
+  paintingZ(i) { return -(Component.FIRST + i * Component.STEP); }
   dustArr = Array.from({ length: 7 }, (_, i) => ({
     x: ((i * 137) % 100) + '%', y: (25 + (i * 53) % 70) + '%',
     s: (1 + (i % 3)) + 'px', dur: (6 + (i % 6) * 2) + 's', delay: -(i * 1.2) + 's'
@@ -454,7 +498,10 @@ class Component extends DCLogic {
     this.depth = 13000;
     this.scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
     this.onScroll = () => {
-      if (this.state.focus != null || this.state.room) return;
+      // A modal traps the reader's attention; the corridor must not walk on
+      // behind it, or closing the modal teleports them somewhere else.
+      if (this.state.focus != null || this.state.room || this.state.mapOpen || this.state.gbOpen) return;
+      this.scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
       this.target = (window.scrollY / this.scrollMax) * this.depth;
     };
     this.onKey = (e) => {
@@ -466,12 +513,16 @@ class Component extends DCLogic {
         return;
       }
       if (this.state.gbOpen || this.state.introVisible || this.state.room || this.state.mapOpen) return;
+      // Never hijack keys while the visitor is typing or inside the scrollable
+      // info panel - they need Arrow/PageDown to move the caret and the text.
+      const el = e.target;
+      if (el && (el.closest && el.closest('input, textarea, [contenteditable="true"], [data-panel]'))) return;
       const fwd = e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'PageDown';
       const back = e.key === 'ArrowUp' || e.key === 'ArrowRight' || e.key === 'PageUp';
       if (!fwd && !back) {
         if (e.key === 'Enter' && this.state.focus == null) {
           const i = this.nearest();
-          this.doOpen(i, i % 2 === 0 ? -1 : 1, -(1100 + i * 1400));
+          this.doOpen(i, i % 2 === 0 ? -1 : 1, this.paintingZ(i));
         }
         return;
       }
@@ -490,7 +541,16 @@ class Component extends DCLogic {
     };
     this.applyZoom();
     window.addEventListener('resize', this.applyZoom);
-    try { const saved = JSON.parse(localStorage.getItem('nadim-guestbook') || '[]'); if (saved.length) this.setState({ gbNotes: saved }); } catch (e) {}
+    try {
+      const saved = JSON.parse(localStorage.getItem('nadim-guestbook') || '[]');
+      if (Array.isArray(saved)) {
+        const ok = saved.filter((n) => n && typeof n.name === 'string' && typeof n.text === 'string');
+        if (ok.length) this.setState({ gbNotes: ok });
+        if (ok.length !== saved.length) this.setState({ gbWarning: 'بعض التواقيع المحفوظة كانت تالفة وانحذفت.' });
+      }
+    } catch (e) {
+      this.setState({ gbWarning: 'ما قدرنا نقرأ التواقيع المحفوظة عهالمتصفح.' });
+    }
 
     this.onTouchStart = (e) => { this.touchY = e.touches[0].clientY; this.touchX = e.touches[0].clientX; };
     this.onTouchMove = (e) => {
@@ -510,6 +570,9 @@ class Component extends DCLogic {
     };
     window.addEventListener('deviceorientation', this.onTilt);
     this.onMove = (e) => {
+      // Same guard touchmove and deviceorientation already had: with the info
+      // panel open, moving the pointer must not swing the scene behind it.
+      if (this.state.focus != null || this.state.mapOpen || this.state.gbOpen) return;
       const px = (this.props.parallax ?? 5) / 5;
       this.tRy = ((e.clientX / window.innerWidth) - 0.5) * -7 * px;
       this.tRx = ((e.clientY / window.innerHeight) - 0.5) * 4 * px;
@@ -522,7 +585,10 @@ class Component extends DCLogic {
       this.raf = requestAnimationFrame(loop);
       const idle = !(Math.abs(this.target - this.cam) > 0.3 || Math.abs(this.targetX - this.x) > 0.3 || Math.abs(this.tRy - this.ry) > 0.006 || Math.abs(this.tRx - this.rx) > 0.006);
       if (idle && !this._needsPass && !this._reveal.length) { this._t = now; return; }
-      if (now - (this._lastApply || 0) < 21) return;
+      // Was `< 21`, which on a 60Hz display dropped every second frame and
+      // pinned the walkthrough to exactly 30fps. 8ms lets every real frame
+      // through while still collapsing bursts on high-refresh displays.
+      if (now - (this._lastApply || 0) < 8) return;
       const dt = Math.min(66, now - (this._t || now));
       this._t = now; this._lastApply = now; this._needsPass = false;
       if (!idle) {
@@ -537,8 +603,8 @@ class Component extends DCLogic {
       const pw = (Math.round(Math.max(0, this.cam / this.depth) * 200) / 2).toFixed(1) + '%';
       if (this.progressRef.current && this._lastPw !== pw) { this._lastPw = pw; this.progressRef.current.style.width = pw; }
       if (this.counterRef.current) {
-        const n = this.state.focus != null ? this.state.focus + 1 : Math.max(1, Math.min(8, Math.round((this.cam - 900) / 1400) + 1));
-        const txt = n + ' / 8';
+        const n = this.state.focus != null ? this.state.focus + 1 : this.nearest() + 1;
+        const txt = n + ' / ' + Component.COUNT;
         if (this.counterRef.current.textContent !== txt) this.counterRef.current.textContent = txt;
       }
       if (!this.paintEls || !this.paintEls.length) this.paintEls = Array.from(document.querySelectorAll('[data-z]'));
@@ -610,6 +676,9 @@ class Component extends DCLogic {
     window.removeEventListener('touchstart', this.onTouchStart);
     window.removeEventListener('touchmove', this.onTouchMove);
     window.removeEventListener('deviceorientation', this.onTilt);
+    // Every pending setTimeout, or they fire into an unmounted tree.
+    this.timers.forEach((id) => clearTimeout(id));
+    this.timers.clear();
   }
 
   syncCatchers(focus) {
@@ -640,25 +709,39 @@ class Component extends DCLogic {
   exitRoom() {
     this.targetX = 0;
     this._needsPass = true;
-    this.setState({ room: false }, () => this.onScroll && this.onScroll());
+    // room:false must land BEFORE onScroll, or its own guard discards the sync
+    // and the camera keeps the study-room depth.
+    this.setState({ room: false }, () => { if (this.onScroll) this.onScroll(); });
   }
-  nearest() { return Math.max(0, Math.min(7, Math.round((this.cam - 1100) / 1400))); }
+  nearest() {
+    return Math.max(0, Math.min(Component.COUNT - 1,
+      Math.round((this.cam - Component.FIRST) / Component.STEP)));
+  }
   goTo(i) {
-    i = Math.max(0, Math.min(7, i));
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    window.scrollTo({ top: ((1100 + i * 1400) / this.depth) * max, behavior: 'smooth' });
+    i = Math.max(0, Math.min(Component.COUNT - 1, i));
+    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({
+      top: ((Component.FIRST + i * Component.STEP) / this.depth) * max,
+      behavior: reduce ? 'auto' : 'smooth'
+    });
   }
   resetPainting(f) {
     if (f == null || !this.paintEls || !this.paintEls[f]) return;
-    const el = this.paintEls[f], side = f % 2 === 0 ? -1 : 1, z = -(1100 + f * 1400);
+    const el = this.paintEls[f], side = f % 2 === 0 ? -1 : 1, z = this.paintingZ(f);
     el.style.transform = 'translateX(' + (side * 470) + 'px) translateZ(' + z + 'px) rotateY(' + (-side * 24) + 'deg) rotateX(-2deg)';
-    setTimeout(() => { el.style.transition = ''; }, 1400);
+    // Stamp the run so a frame re-opened in the meantime keeps its transition.
+    const run = (this._resetRun = (this._resetRun || 0) + 1);
+    el.dataset.resetRun = String(run);
+    this.later(() => {
+      if (el.dataset.resetRun === String(run)) el.style.transition = '';
+    }, 1400);
   }
   stepFocus(d) {
-    const f = this.state.focus, n = Math.max(0, Math.min(7, f + d));
+    const f = this.state.focus, n = Math.max(0, Math.min(Component.COUNT - 1, f + d));
     if (n === f) return;
     this.resetPainting(f);
-    this.doOpen(n, n % 2 === 0 ? -1 : 1, -(1100 + n * 1400));
+    this.doOpen(n, n % 2 === 0 ? -1 : 1, this.paintingZ(n));
   }
   doClose() {
     this.syncCatchers(null);
@@ -692,8 +775,10 @@ class Component extends DCLogic {
     const sizes = ['١٢٠ × ٩٠ سم', '١٠٠ × ٨٠ سم', '١٤٠ × ١٠٠ سم', '٩٠ × ٩٠ سم', '١٢٠ × ٨٠ سم', '١٠٠ × ١٠٠ سم', '٨٠ × ٦٠ سم', '١٥٠ × ١١٠ سم'];
     const paintings = titles.map((t, i) => {
       const side = i % 2 === 0 ? -1 : 1;
-      const z = -(1100 + i * 1400);
-      return { ...t, id: 'art3d-' + (i + 1), ph: 'اسحب صورة اللوحة لهون', z, side,
+      const z = this.paintingZ(i);
+      return { ...t, id: 'art3d-' + (i + 1), ph: 'صورة اللوحة', z, side,
+        alt: t.title + ' — ' + t.meta,
+        openLabel: 'عاين لوحة ' + t.title + ' عن قرب',
         src: './paintings/art' + (i + 1) + '.png', num: (i + 1) + ' / 8',
         comment: comments[i], size: sizes[i],
         bigNum: arabicNums[i], numSide: side === -1 ? 'right' : 'left',
@@ -739,6 +824,14 @@ class Component extends DCLogic {
       stripW: nr ? '100%' : '10%',
       stripH: nr ? '34%' : 'calc(100% - 104px)',
       closeFocus: () => this.doClose(),
+      // role="button" divs must answer Enter and Space like a real button.
+      activateKey: (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+        if (e.currentTarget !== e.target) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.click();
+      },
       enterRoom: () => this.enterRoom(),
       exitRoom: () => this.exitRoom(),
       roomOpen: this.state.room,
@@ -750,13 +843,23 @@ class Component extends DCLogic {
       gbNameRef: this.gbNameRef, gbTextRef: this.gbTextRef,
       openGuestbook: () => this.setState({ gbOpen: true }),
       closeGuestbook: () => this.setState({ gbOpen: false }),
+      gbWarning: this.state.gbWarning,
       addNote: () => {
         const name = (this.gbNameRef.current && this.gbNameRef.current.value.trim()) || 'زائر';
         const text = (this.gbTextRef.current && this.gbTextRef.current.value.trim());
-        if (!text) return;
+        if (!text) {
+          this.setState({ gbWarning: 'اكتب كلمتك قبل ما توقّع.' });
+          if (this.gbTextRef.current) this.gbTextRef.current.focus();
+          return;
+        }
         const notes = [{ name, text }, ...this.state.gbNotes].slice(0, 60);
-        this.setState({ gbNotes: notes });
-        try { localStorage.setItem('nadim-guestbook', JSON.stringify(notes)); } catch (e) {}
+        let warn = null;
+        try { localStorage.setItem('nadim-guestbook', JSON.stringify(notes)); }
+        catch (e) {
+          // Never show the note as saved when it was not. Charter rule 1.
+          warn = 'المتصفح مانع الحفظ — كلمتك رح تروح لما تسكّر الصفحة.';
+        }
+        this.setState({ gbNotes: notes, gbWarning: warn });
         if (this.gbTextRef.current) this.gbTextRef.current.value = '';
       },
       doorLRef: this.doorLRef, doorRRef: this.doorRRef, introContentRef: this.introContentRef,
@@ -777,7 +880,15 @@ class Component extends DCLogic {
           });
         }
         this.cam = -950; this.target = 0; window.scrollTo({ top: 0 });
-        setTimeout(() => { this._entering = false; this.setState({ introVisible: false }); }, 2450);
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        this.later(() => {
+          this._entering = false;
+          this.setState({ introVisible: false }, () => {
+            // Send focus into the tour instead of leaving it on a removed button.
+            const h = document.getElementById('museum-title');
+            if (h) h.focus();
+          });
+        }, reduce ? 0 : 2450);
       }
     };
   }
