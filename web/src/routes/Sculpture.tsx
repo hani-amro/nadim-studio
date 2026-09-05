@@ -66,7 +66,9 @@ export function Sculpture() {
   const caption = `${t.sculptMedium} · ${dimensions} · ${String(SCULPTURE.year)}`
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-canvas-sculpt text-ink-museum">
+    // The stage is exactly the viewport minus the demo notice, so the WebGL
+    // canvas is never partly hidden behind it and the page never scrolls.
+    <div className="relative mt-[var(--demo-bar)] h-[calc(100dvh-var(--demo-bar))] w-full overflow-hidden bg-canvas-sculpt text-ink-museum">
       {/* The canvas is decorative to assistive tech; sculptSr below carries
           the description, and the caption carries the real dimensions. */}
       <div ref={hostRef} aria-hidden="true" className="absolute inset-0" />

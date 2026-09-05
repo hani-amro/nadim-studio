@@ -2,3 +2,9 @@
 .thumbnail
 uploads/
 *.state.json
+
+# The previous .dc.html build. Kept on disk for reference, but it is not
+# this project's code: legacy/image-slot.js and legacy/three-d-stage.js are
+# copied third-party starter scaffold with no licence, and nothing here builds
+# from any of it.
+legacy/

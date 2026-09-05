@@ -1,15 +1,14 @@
 /**
  * Site-wide configuration.
  *
- * CONTACT_EMAIL is a placeholder. It is the only contact route on the site, so
- * a real address must replace it before launch — every "get in touch" button
- * and every mailto link on every page reads from here.
+ * There is deliberately no contact address here. Nadim Studio is an invented
+ * artist built for a front-end demo, so there is nobody to write to and nothing
+ * to buy; every "get in touch" control on the site points at the portfolio of
+ * the person who actually built it instead. The previous build shipped
+ * `hello@example.com` behind five live CTAs — a placeholder that would have
+ * gone out as if it were real.
  */
-export const CONTACT_EMAIL = 'hello@example.com'
-
-export const IS_PLACEHOLDER_EMAIL = CONTACT_EMAIL.endsWith('@example.com')
-
-export const mailto = `mailto:${CONTACT_EMAIL}`
+export const PORTFOLIO_URL = 'https://hani-amro.github.io/'
 
 export const ROUTES = {
   home: '/',

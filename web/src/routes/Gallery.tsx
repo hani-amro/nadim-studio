@@ -4,7 +4,7 @@ import { Artwork } from '../components/Artwork'
 import { Dialog } from '../components/Dialog'
 import { Notice } from '../components/Notice'
 import { ARTWORKS, GALLERY_ARTWORKS } from '../data/artworks'
-import { mailto, ROUTES } from '../data/site'
+import { PORTFOLIO_URL, ROUTES } from '../data/site'
 import { useLang } from '../i18n/useLang'
 import { usePaintCanvas } from './usePaintCanvas'
 
@@ -36,9 +36,15 @@ function layoutFor(i: number): { span: string; frame: string } {
   return LAYOUT[i % LAYOUT.length] ?? { span: '', frame: '' }
 }
 
-/** A painting for the about section. The legacy page put an empty portrait
- *  drop-zone here; until a real photo of the artist exists, a real painting
- *  with a real caption is the honest thing to show. */
+/**
+ * The piece shown beside the about text.
+ *
+ * The legacy page had an empty portrait drop-zone here and the README carried a
+ * "drop in a photo of the artist" TODO. There is no artist to photograph — Nadim
+ * is invented — so the slot is not waiting for anything: it shows a painting
+ * from the collection, captioned as that painting, with no face implied. That is
+ * why `portraitAlt` is gone from the strings rather than left unused.
+ */
 const ABOUT_PIECE = ARTWORKS.find((a) => !a.inGallery)
 
 /** Mouse and pen can drag to paint; on a touch screen the scroller claims the
@@ -91,7 +97,7 @@ export function Gallery() {
   const navLink = 'inline-flex min-h-11 items-center text-ink hover:text-brand-gold'
 
   return (
-    <div className="relative min-h-screen bg-canvas text-ink">
+    <div className="relative min-h-screen bg-canvas pt-[var(--demo-bar)] text-ink">
       <Dialog open={introOpen} onClose={enter} className="bg-canvas">
         {(titleId) => (
           // The dialog's own box is content-sized, so a percentage width here
@@ -231,11 +237,24 @@ export function Gallery() {
               />
             ) : null}
             <div>
-              <h2 id="about-h" className="mb-6 font-display text-[clamp(28px,7vw,42px)] font-bold text-white">
+              <h2 id="about-h" className="mb-5 font-display text-[clamp(28px,7vw,42px)] font-bold text-white">
                 {t.aboutTitle}
               </h2>
-              <p className="mb-4.5 text-[17px] leading-8 font-light text-[#dfe5f8]">{t.aboutP1}</p>
-              <p className="text-[17px] leading-8 font-light text-[#dfe5f8]">{t.aboutP2}</p>
+              {/* The prose below is good copy and it stays — but it is written
+                  in the first person by someone who does not exist, so it is
+                  framed as a quotation and signed as one. A visitor can read it
+                  as the character's voice and never as a real cv. */}
+              <p className="mb-6 border-s-2 border-white/45 ps-4 text-[15px] leading-7 font-light text-white/90">
+                {t.aboutNote}
+              </p>
+              <blockquote className="m-0">
+                <p className="mb-4.5 text-[17px] leading-8 font-light text-[#dfe5f8]">{t.aboutP1}</p>
+                <p className="text-[17px] leading-8 font-light text-[#dfe5f8]">{t.aboutP2}</p>
+                <footer className="mt-5 text-sm text-white/80">
+                  {'— '}
+                  <cite className="not-italic">{t.aboutCite}</cite>
+                </footer>
+              </blockquote>
             </div>
           </div>
         </section>
@@ -253,8 +272,13 @@ export function Gallery() {
           <p className="mx-auto mb-9 max-w-[420px] text-base leading-[1.9] font-light text-[#b8b0a4]">
             {t.contactBody}
           </p>
+          {/* There is no artist and no address: this used to be a mailto to
+              hello@example.com. It goes to the portfolio of the person who
+              built the demo, which is the only real thing to send anyone to. */}
           <a
-            href={mailto}
+            href={PORTFOLIO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex min-h-11 items-center bg-brand-red px-11 py-4 text-base font-medium text-white hover:bg-[#b93222]"
           >
             {t.contactBtn}

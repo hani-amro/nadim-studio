@@ -415,12 +415,11 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       }
 
       // Forward is "further into the page": down, and the key that points the
-      // way the page reads (left-to-right).
-      const rtl = false
-      const forwardKey = rtl ? 'ArrowLeft' : 'ArrowRight'
-      const backKey = rtl ? 'ArrowRight' : 'ArrowLeft'
-      const fwd = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === forwardKey
-      const back = e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === backKey
+      // way the page reads. The site is left-to-right only, so that is
+      // ArrowRight — the `const rtl = false` switch this used to branch on
+      // could take one arm and nothing else.
+      const fwd = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'ArrowRight'
+      const back = e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'ArrowLeft'
       if (!fwd && !back) return
 
       e.preventDefault()

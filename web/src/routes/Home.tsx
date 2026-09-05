@@ -13,7 +13,9 @@ export function Home() {
   ]
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // pt-[--demo-bar] keeps the page clear of the fixed demo notice; with
+    // border-box sizing the min-height still resolves to one viewport.
+    <div className="flex min-h-screen flex-col pt-[var(--demo-bar)]">
       <header className="flex items-start justify-between gap-4 px-5 pt-8 sm:px-10 sm:pt-14 lg:px-16">
         <div>
           <p className="mb-3 text-xs tracking-[0.3em] text-brand-gold sm:text-sm">{t.landingKicker}</p>

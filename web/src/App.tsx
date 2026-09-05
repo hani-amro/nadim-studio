@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Routes, Route, useLocation, Link } from 'react-router-dom'
+import { DemoNotice } from './components/DemoNotice'
 import { ROUTES } from './data/site'
 import { useLang } from './i18n/useLang'
 import { Home } from './routes/Home'
@@ -25,7 +26,7 @@ function RouteChange() {
 function Loading() {
   const { t } = useLang()
   return (
-    <div className="flex min-h-screen items-center justify-center text-muted" role="status">
+    <div className="flex min-h-[calc(100dvh-var(--demo-bar))] items-center justify-center pt-[var(--demo-bar)] text-muted" role="status">
       {t.loading}
     </div>
   )
@@ -34,7 +35,7 @@ function Loading() {
 function NotFound() {
   const { t } = useLang()
   return (
-    <main id="main" tabIndex={-1} className="flex min-h-screen flex-col items-center justify-center gap-6 p-6 text-center outline-none">
+    <main id="main" tabIndex={-1} className="flex min-h-[calc(100dvh-var(--demo-bar))] flex-col items-center justify-center gap-6 p-6 pt-[calc(1.5rem+var(--demo-bar))] text-center outline-none">
       <h1 className="font-display text-4xl">{t.brand}</h1>
       <p className="text-muted">{t.notFound}</p>
       <Link to={ROUTES.home} className="text-brand-gold underline">
@@ -49,6 +50,10 @@ export function App() {
     // Hash routing so the built site works from any static host or a plain
     // file server without server-side rewrite rules.
     <HashRouter>
+      {/* Outside <Routes> on purpose: this is the one element that must be on
+          screen no matter which route is mounted, and it must not remount (and
+          re-measure) on every navigation. */}
+      <DemoNotice />
       <RouteChange />
       <Suspense fallback={<Loading />}>
         <Routes>

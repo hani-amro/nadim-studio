@@ -66,7 +66,7 @@ function strokeGeometry(
   const geo = new THREE.TubeGeometry(curve, segs, radius, radial, false)
   const pos = geo.getAttribute('position')
   // A geometry that silently lost its positions would render as nothing at
-  // all; the route turns this into the visible Arabic failure message.
+  // all; the route turns this into the visible failure message.
   if (!pos) throw new Error('strokeGeometry: TubeGeometry produced no position attribute')
 
   for (let i = 0; i <= segs; i++) {

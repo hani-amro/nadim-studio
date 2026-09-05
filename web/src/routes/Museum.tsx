@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { ARTWORKS, COUNT, artworkSrc, paintingZ } from '../data/artworks'
-import { ROUTES, mailto } from '../data/site'
+import { ROUTES, PORTFOLIO_URL } from '../data/site'
 import { captionMeta, note, orderLabel, sizeLabel, title } from '../i18n/strings'
 import { useLang } from '../i18n/useLang'
 import { Dialog } from '../components/Dialog'
@@ -34,6 +34,15 @@ const MAX_NOTES = 60
 /** Height of each letterbox bar, and therefore the top/bottom inset of every
  *  overlay that must sit between them. */
 const BAR = 52
+/**
+ * The top of the corridor chrome.
+ *
+ * The museum letterboxes its top and bottom BAR pixels. The demo notice is
+ * fixed over the top of every route, so the top letterbox has to start below
+ * whichever of the two is taller (--museum-top) — otherwise a notice that
+ * wraps to two lines on a phone would sit on the wordmark.
+ */
+const TOP = 'var(--museum-top)'
 
 function isNote(value: unknown): value is GuestNote {
   if (typeof value !== 'object' || value === null) return false
@@ -378,7 +387,10 @@ export function Museum() {
                   {/* The legacy build hung an upload widget in each of these
                       frames. There is no such widget here and no study photos
                       in the collection, so they stay honestly empty rather
-                      than showing invented work. */}
+                      than showing invented work — and the plaque under them
+                      says so, because three finished gold frames hanging empty
+                      in a room that announces "works on paper" otherwise reads
+                      as a bug rather than a decision. */}
                   {STUDY_FRAMES.map((left) => (
                     <div
                       key={left}
@@ -406,6 +418,26 @@ export function Museum() {
                       </div>
                     </div>
                   ))}
+                  <p
+                    style={{
+                      position: 'absolute',
+                      left: 200,
+                      width: 1100,
+                      top: 646,
+                      margin: 0,
+                      padding: '20px 28px',
+                      boxSizing: 'border-box',
+                      textAlign: 'center',
+                      fontSize: 23,
+                      lineHeight: 1.75,
+                      fontWeight: 300,
+                      color: '#cbbc98',
+                      border: '1px solid rgba(217,164,65,.35)',
+                      background: 'rgba(10,8,6,.55)',
+                    }}
+                  >
+                    {t.studiesEmpty}
+                  </p>
                 </div>
                 {/* The work table under the window. */}
                 <div
@@ -1186,7 +1218,9 @@ export function Museum() {
                   <p style={{ margin: 0, fontSize: 17, color: '#cbbc98', fontWeight: 300, maxWidth: 420, lineHeight: 2 }}>{t.endBody}</p>
                   <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <a
-                      href={mailto}
+                      href={PORTFOLIO_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{ display: 'inline-block', minHeight: 44, fontSize: 16, padding: '15px 48px', border: '1px solid #d9a441', color: '#d9a441', pointerEvents: 'auto' }}
                     >
                       {t.contactBtn}
@@ -1253,9 +1287,9 @@ export function Museum() {
         </div>
 
         {/* ---------------------------------------------------------- chrome */}
-        <div aria-hidden="true" className="fixed inset-x-0 top-0 z-20 h-13 bg-black" />
+        <div aria-hidden="true" className="fixed inset-x-0 top-0 z-20 bg-black" style={{ height: TOP }} />
 
-        <header className="pointer-events-none fixed inset-x-0 top-13 z-20 flex items-start justify-between gap-3 px-5 py-4 sm:px-7">
+        <header className="pointer-events-none fixed inset-x-0 z-20 flex items-start justify-between gap-3 px-5 py-4 sm:px-7" style={{ top: TOP }}>
           <h1
             ref={heading}
             tabIndex={-1}
@@ -1272,8 +1306,13 @@ export function Museum() {
             <Link to={ROUTES.home} className="flex min-h-11 items-center px-1 text-sm text-brand-gold hover:text-brand-gold-bright">
               {t.home}
             </Link>
-            <a href={mailto} className="flex min-h-11 items-center px-1 text-sm text-brand-gold hover:text-brand-gold-bright">
-              {t.contact}
+            <a
+              href={PORTFOLIO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex min-h-11 items-center px-1 text-sm text-brand-gold hover:text-brand-gold-bright"
+            >
+              {t.portfolio}
             </a>
             
           </nav>
@@ -1314,7 +1353,7 @@ export function Museum() {
         </div>
 
         {room && (
-          <div className="fixed inset-x-0 top-19 z-30 flex justify-center px-4" style={{ animation: 'fadeInUp .8s .4s ease both' }}>
+          <div className="fixed inset-x-0 z-30 flex justify-center px-4" style={{ top: `calc(${TOP} + 24px)`, animation: 'fadeInUp .8s .4s ease both' }}>
             <div className="flex items-center gap-3 border border-line-museum bg-[rgba(10,8,6,.8)] px-4 py-2 sm:gap-4">
               <span className="font-display text-lg text-ink-museum">{t.studiesRoom}</span>
               <span className="hidden text-xs text-muted-dim sm:inline">{t.studiesHint}</span>
@@ -1446,11 +1485,12 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
   const onRight = side === -1
   const holeX = narrow ? '50%' : onRight ? '30%' : '70%'
 
+  const sideHeight = `calc(100% - ${TOP} - ${String(BAR)}px)`
   const strip: CSSProperties = narrow
-    ? { position: 'fixed', top: BAR, left: 0, right: 0, height: '34%', zIndex: 26 }
+    ? { position: 'fixed', top: TOP, left: 0, right: 0, height: '34%', zIndex: 26 }
     : onRight
-      ? { position: 'fixed', top: BAR, left: 0, width: '10%', height: `calc(100% - ${BAR * 2}px)`, zIndex: 26 }
-      : { position: 'fixed', top: BAR, right: 0, width: '10%', height: `calc(100% - ${BAR * 2}px)`, zIndex: 26 }
+      ? { position: 'fixed', top: TOP, left: 0, width: '10%', height: sideHeight, zIndex: 26 }
+      : { position: 'fixed', top: TOP, right: 0, width: '10%', height: sideHeight, zIndex: 26 }
 
   const panel: CSSProperties = {
     position: 'fixed',
@@ -1473,14 +1513,14 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
         }
       : onRight
         ? {
-            top: BAR,
+            top: TOP,
             bottom: BAR,
             right: 0,
             width: 'min(460px, 44vw)',
             background: 'linear-gradient(to right, rgba(10,8,6,0), rgba(10,8,6,.95) 24%)',
           }
         : {
-            top: BAR,
+            top: TOP,
             bottom: BAR,
             left: 0,
             width: 'min(460px, 44vw)',
@@ -1573,7 +1613,12 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                 {sizeLabel(art)} · {t.uniqueSigned}
               </p>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', animation: 'fadeInUp .7s .65s ease both' }}>
-                <a href={mailto} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: 14, padding: '12px 26px', border: '1px solid #d9a441', color: '#d9a441' }}>
+                <a
+                  href={PORTFOLIO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: 14, padding: '12px 26px', border: '1px solid #d9a441', color: '#d9a441' }}
+                >
                   {t.askAbout}
                 </a>
                 <button
