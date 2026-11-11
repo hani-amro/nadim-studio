@@ -52,8 +52,11 @@ export function DemoNotice() {
       // — so there is no state in which the site is on screen and this is not.
       className="fixed inset-x-0 top-0 z-100 border-b border-line bg-canvas"
     >
-      <p className="m-0 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 px-4 py-2 text-center text-[12px] leading-snug font-light text-muted sm:text-[13px]">
-        <span className="border border-brand-gold px-1.5 py-px text-[10px] tracking-[0.25em] text-brand-gold">
+      {/* Below sm the tag runs inline with the sentence instead of taking a
+          row of its own: on a 360px phone the bar was 89px, an eighth of the
+          screen, before the page had shown anything. */}
+      <p className="m-0 block px-4 py-1.5 text-center text-[12px] leading-snug font-light text-muted sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-2.5 sm:gap-y-1 sm:py-2 sm:text-[13px]">
+        <span className="me-2 inline-block border border-brand-gold px-1.5 py-px align-[1px] text-[10px] leading-none tracking-[0.25em] text-brand-gold sm:me-0 sm:leading-normal">
           {t.demoTag}
         </span>
         <span>

@@ -6,6 +6,7 @@ import { Notice } from '../components/Notice'
 import { ARTWORKS, GALLERY_ARTWORKS } from '../data/artworks'
 import { PORTFOLIO_URL, ROUTES } from '../data/site'
 import { useLang } from '../i18n/useLang'
+import { useFinePointer } from '../hooks/useFinePointer'
 import { usePaintCanvas } from './usePaintCanvas'
 
 /** The horizontal rhythm the whole page shares. */
@@ -46,21 +47,6 @@ function layoutFor(i: number): { span: string; frame: string } {
  * why `portraitAlt` is gone from the strings rather than left unused.
  */
 const ABOUT_PIECE = ARTWORKS.find((a) => !a.inGallery)
-
-/** Mouse and pen can drag to paint; on a touch screen the scroller claims the
- *  drag, so the hint may only promise a tap. */
-function useFinePointer(): boolean {
-  const [fine, setFine] = useState(() => window.matchMedia('(pointer: fine)').matches)
-  useEffect(() => {
-    const mq = window.matchMedia('(pointer: fine)')
-    const onChange = (e: MediaQueryListEvent) => setFine(e.matches)
-    // No initial setFine here: useState already read the same query lazily,
-    // and repeating it only forces a second render on mount.
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
-  return fine
-}
 
 export function Gallery() {
   const { t } = useLang()

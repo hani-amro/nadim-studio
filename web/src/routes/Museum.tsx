@@ -21,10 +21,21 @@ import { captionMeta, note, orderLabel, sizeLabel, title } from '../i18n/strings
 import { useLang } from '../i18n/useLang'
 import { Dialog } from '../components/Dialog'
 import { Notice, type NoticeCode } from '../components/Notice'
+import { useFinePointer } from '../hooks/useFinePointer'
 import { Bays } from './museum/Bays'
 import { Guestbook, type GuestNote } from './museum/Guestbook'
 import { MapModal } from './museum/MapModal'
-import { useCorridor } from './useCorridor'
+import {
+  LETTERBOX,
+  NARROW_PX,
+  ORIGIN_Y,
+  PERSPECTIVE,
+  PLAQUE_Z,
+  SHEET,
+  sheetWindow,
+  useCorridor,
+  type Door,
+} from './useCorridor'
 
 const GUESTBOOK_KEY = 'nadim-guestbook'
 /** Enough for a real visit; past this the oldest signatures are dropped and
@@ -33,7 +44,7 @@ const MAX_NOTES = 60
 
 /** Height of each letterbox bar, and therefore the top/bottom inset of every
  *  overlay that must sit between them. */
-const BAR = 52
+const BAR = LETTERBOX
 /**
  * The top of the corridor chrome.
  *
@@ -95,7 +106,14 @@ const DUST = Array.from({ length: 7 }, (_, i) => ({
 /** Where the three empty study frames hang on the study-room wall. */
 const STUDY_FRAMES = [200, 615, 1030]
 
-const SCENE_BACKDROP = 'radial-gradient(ellipse at 50% 40%, #2b2012 0%, #171008 45%, #0a0806 78%)'
+/** Below this height (a phone on its side) the desktop layout keeps its
+ *  shape but drops its display sizes and moves overlays off the scene. */
+const SHORT_PX = 560
+
+const DOOR_CHIP =
+  'pointer-events-auto flex min-h-11 items-center border border-brand-gold bg-[rgba(10,8,6,.88)] px-5 text-sm text-brand-gold hover:bg-brand-gold hover:text-black'
+
+const SCENE_BACKDROP ='radial-gradient(ellipse at 50% 40%, #2b2012 0%, #171008 45%, #0a0806 78%)'
 
 const PLINTH: CSSProperties = {
   position: 'absolute',
@@ -113,7 +131,9 @@ export function Museum() {
   const [room, setRoom] = useState(false)
   const [mapOpen, setMapOpen] = useState(false)
   const [gbOpen, setGbOpen] = useState(false)
-  const [narrow, setNarrow] = useState(() => window.innerWidth < 760)
+  const [narrow, setNarrow] = useState(() => window.innerWidth < NARROW_PX)
+  const fine = useFinePointer()
+  const [door, setDoor] = useState<Door | null>(null)
   // Restored in the lazy initialiser: reading storage is synchronous, so doing
   // it in an effect would render an empty book first and then replace it.
   const [restored] = useState(readNotes)
@@ -128,7 +148,7 @@ export function Museum() {
 
   const corridor = useCorridor(
     { focus, room, mapOpen, gbOpen, introVisible, narrow },
-    { onFocus: setFocus, onRoom: setRoom, onNarrow: setNarrow },
+    { onFocus: setFocus, onRoom: setRoom, onNarrow: setNarrow, onDoor: setDoor },
   )
 
   // Ref callbacks are memoised rather than built inline. An inline callback is
@@ -152,7 +172,7 @@ export function Museum() {
   // the rule is there to catch. Destructuring keeps the ref identity intact.
   const {
     lookRef, worldRef, progressRef, counterRef, railRef,
-    registerBay, registerMirror,
+    registerBay, registerMirror, registerPlaque,
     open: openPainting, close: closePainting, enterRoom, exitRoom, beginWalk, later, reducedMotion,
   } = corridor
   const { studyDoor: studyDoorRef, studyRoom: studyRoomRef, lectern: lecternRef, mapPlaque: mapPlaqueRef } = bayRefs
@@ -238,9 +258,23 @@ export function Museum() {
 
       <main id="main" tabIndex={-1} className="relative block bg-canvas-museum text-ink-museum outline-none" style={{ height: '950vh' }}>
         {/* ---------------------------------------------------------- world */}
+        {/* overflow: clip, not hidden. A hidden box is still a scroll
+            container: focus() or scrollIntoView() on a painting the camera
+            has left off-screen (a dialog handing focus back to its opener
+            does exactly that) scrolled the whole scene sideways, and it
+            stayed shifted for the rest of the visit. A clipped box cannot
+            be scrolled at all. `hidden` stays on the class as the fallback:
+            a browser without `clip` (Safari before 16) drops the inline
+            value and keeps clipping the old way, instead of spilling the
+            corridor across the page. */}
         <div
           className="fixed inset-0 overflow-hidden"
-          style={{ perspective: '1150px', perspectiveOrigin: '50% 46%', background: SCENE_BACKDROP }}
+          style={{
+            overflow: 'clip',
+            perspective: `${PERSPECTIVE}px`,
+            perspectiveOrigin: `50% ${ORIGIN_Y * 100}%`,
+            background: SCENE_BACKDROP,
+          }}
         >
           <div
             ref={lookRef}
@@ -675,12 +709,17 @@ export function Museum() {
 
               {/* -- the map plaque just inside the entrance --------------- */}
               <div ref={mapPlaqueRef} style={PLINTH}>
+                {/* On a phone the camera swings right toward painting 02
+                    exactly where this sign stands, and walked straight
+                    through it. The engine fades it out there before the
+                    swing (registerPlaque); the HUD's Map button stays. */}
                 <div
+                  ref={registerPlaque}
                   style={{
                     position: 'absolute',
                     left: '50%',
                     top: '50%',
-                    transform: 'translateX(520px) translateZ(-1500px) rotateY(-26deg)',
+                    transform: `translateX(520px) translateZ(${String(PLAQUE_Z)}px) rotateY(-26deg)`,
                     transformStyle: 'preserve-3d',
                   }}
                 >
@@ -792,7 +831,9 @@ export function Museum() {
                         <span>{t.mapWing2}</span>
                       </span>
                       <span style={{ display: 'block', marginTop: 20, fontSize: 14, color: '#b8a884' }}>{t.mapInventory}</span>
-                      <span style={{ display: 'block', marginTop: 12, fontSize: 13, color: '#d9a441' }}>{t.mapZoomHint}</span>
+                      <span style={{ display: 'block', marginTop: 12, fontSize: 13, color: '#d9a441' }}>
+                        {fine ? t.mapZoomHint : t.mapZoomHintCoarse}
+                      </span>
                     </span>
                   </button>
                 </div>
@@ -959,18 +1000,18 @@ export function Museum() {
                             aria-hidden="true"
                             style={{
                               position: 'absolute',
-                              bottom: 14,
-                              left: 14,
-                              width: 38,
-                              height: 38,
+                              bottom: narrow ? 20 : 14,
+                              left: narrow ? 20 : 14,
+                              width: narrow ? 72 : 38,
+                              height: narrow ? 72 : 38,
                               borderRadius: '50%',
-                              border: '1px solid #d9a441',
+                              border: `${narrow ? 2 : 1}px solid #d9a441`,
                               color: '#d9a441',
                               background: 'rgba(10,8,6,.65)',
                               display: focus === i ? 'none' : 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: 20,
+                              fontSize: narrow ? 40 : 20,
                               animation: 'plusPulse 2.4s ease-out infinite',
                             }}
                           >
@@ -994,19 +1035,25 @@ export function Museum() {
                         boxShadow: 'inset 0 3px 6px rgba(255,255,255,.12)',
                       }}
                     />
-                    <div style={{ position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                      <p style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 34, color: '#efe7d8', textShadow: '0 2px 20px rgba(0,0,0,.9)' }}>
+                    {/* On a phone the world is drawn at about a third of its
+                        size, so the caption is set larger and the "click to
+                        see it closer" chip — four pixels tall at that scale —
+                        gives way to the pulsing + badge on the frame. */}
+                    <div style={{ position: 'absolute', bottom: narrow ? 8 : 28, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <p style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: narrow ? 48 : 34, color: '#efe7d8', textShadow: '0 2px 20px rgba(0,0,0,.9)' }}>
                         {name}
                       </p>
-                      <p style={{ margin: '6px 0 0', fontSize: 13, color: '#c9b98e' }}>
+                      <p style={{ margin: '6px 0 0', fontSize: narrow ? 22 : 13, color: '#c9b98e' }}>
                         {meta} · {orderLabel(art.order)}
                       </p>
-                      <p
-                        aria-hidden="true"
-                        style={{ margin: '10px 0 0', fontSize: 12, color: '#8d7c58', border: '1px solid #3a2e1a', padding: '6px 16px', display: 'inline-block' }}
-                      >
-                        {t.openCloser}
-                      </p>
+                      {!narrow && (
+                        <p
+                          aria-hidden="true"
+                          style={{ margin: '10px 0 0', fontSize: 12, color: '#8d7c58', border: '1px solid #3a2e1a', padding: '6px 16px', display: 'inline-block' }}
+                        >
+                          {fine ? t.openCloser : t.openCloserCoarse}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )
@@ -1181,22 +1228,33 @@ export function Museum() {
                   </div>
                 </div>
 
-                {/* The end wall. */}
+                {/* The end wall. The walk stops with it at depth zero, so it
+                    is drawn at exactly the look zoom — 0.62 on a phone. 900px
+                    of wall became 558px on a 390px screen and the headline
+                    ran off both edges; the phone wall is 540 wide, with its
+                    type set up so it lands at a readable size, and the three
+                    actions stacked as full-width buttons. */}
                 <div
                   style={{
                     position: 'absolute',
                     left: '50%',
                     top: '50%',
-                    width: 900,
-                    height: 700,
-                    margin: '-350px -450px',
+                    width: narrow ? 540 : 900,
+                    // The phone wall is taller (three stacked buttons), runs
+                    // down to the floor line at +340, and is backed: the
+                    // wall itself is a transparent layer, and through its
+                    // lower half the carpet beyond it showed across the
+                    // buttons.
+                    height: narrow ? 800 : 700,
+                    margin: narrow ? '-460px -270px' : '-350px -450px',
+                    ...(narrow ? { background: 'linear-gradient(180deg, rgba(18,12,6,0), #120c06 34%)' } : {}),
                     transform: 'translateZ(-13000px)',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
-                    gap: 26,
+                    gap: narrow ? 22 : 26,
                   }}
                 >
                   <div
@@ -1211,17 +1269,38 @@ export function Museum() {
                       background: 'radial-gradient(ellipse 48% 55% at 50% 0%, rgba(255,214,130,.45), transparent 72%)',
                     }}
                   />
-                  <p style={{ margin: 0, fontSize: 14, color: '#d9a441' }}>
+                  <p style={{ margin: 0, fontSize: narrow ? 20 : 14, color: '#d9a441' }}>
                     {t.endKicker} — <span style={{ letterSpacing: 5 }}>{t.endLatin}</span>
                   </p>
-                  <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 68, fontWeight: 700, lineHeight: 1.3 }}>{t.endTitle}</h2>
-                  <p style={{ margin: 0, fontSize: 17, color: '#cbbc98', fontWeight: 300, maxWidth: 420, lineHeight: 2 }}>{t.endBody}</p>
-                  <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: narrow ? 66 : 68, fontWeight: 700, lineHeight: narrow ? 1.15 : 1.3 }}>
+                    {t.endTitle}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: narrow ? 25 : 17, color: '#cbbc98', fontWeight: 300, maxWidth: narrow ? 500 : 420, lineHeight: narrow ? 1.6 : 2 }}>
+                    {t.endBody}
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: narrow ? 14 : 16,
+                      justifyContent: 'center',
+                      flexWrap: 'wrap',
+                      ...(narrow ? { flexDirection: 'column', alignSelf: 'stretch', paddingInline: 20 } : {}),
+                    }}
+                  >
                     <a
                       href={PORTFOLIO_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'inline-block', minHeight: 44, fontSize: 16, padding: '15px 48px', border: '1px solid #d9a441', color: '#d9a441', pointerEvents: 'auto' }}
+                      style={{
+                        display: 'inline-block',
+                        minHeight: narrow ? 76 : 44,
+                        fontSize: narrow ? 24 : 16,
+                        padding: narrow ? '22px 24px' : '15px 48px',
+                        border: '1px solid #d9a441',
+                        color: '#d9a441',
+                        pointerEvents: 'auto',
+                        boxSizing: 'border-box',
+                      }}
                     >
                       {t.contactBtn}
                     </a>
@@ -1229,10 +1308,10 @@ export function Museum() {
                       type="button"
                       onClick={() => setGbOpen(true)}
                       style={{
-                        minHeight: 44,
+                        minHeight: narrow ? 76 : 44,
                         font: 'inherit',
-                        fontSize: 16,
-                        padding: '15px 40px',
+                        fontSize: narrow ? 24 : 16,
+                        padding: narrow ? '22px 24px' : '15px 40px',
                         background: 'rgba(217,164,65,.12)',
                         border: '1px solid #4a3c22',
                         color: '#efe7d8',
@@ -1246,14 +1325,15 @@ export function Museum() {
                       to={ROUTES.sculpture}
                       style={{
                         display: 'inline-block',
-                        minHeight: 44,
-                        fontSize: 16,
-                        padding: '15px 40px',
+                        minHeight: narrow ? 76 : 44,
+                        fontSize: narrow ? 24 : 16,
+                        padding: narrow ? '22px 24px' : '15px 40px',
                         border: '1px solid #4a3c22',
                         color: '#efe7d8',
                         background: 'rgba(217,164,65,.12)',
                         pointerEvents: 'auto',
                         whiteSpace: 'nowrap',
+                        boxSizing: 'border-box',
                       }}
                     >
                       {t.sculptureRoom}
@@ -1319,13 +1399,18 @@ export function Museum() {
         </header>
 
         <div className="fixed inset-x-0 bottom-0 z-20 flex h-13 items-center justify-between gap-4 bg-black px-4 sm:px-7">
+          {/* Used to be hidden below 768px, so the one screen that most needs
+              telling how to walk never was. On touch it says swipe, not keys. */}
           <span
-            className="hidden text-[11px] text-muted-museum md:inline"
+            className={`min-w-0 truncate text-[11px] text-muted-museum ${room ? 'invisible' : ''}`}
             style={{ animation: 'pulseHint 2.8s ease-in-out infinite' }}
           >
-            {t.walkHint} — <span className="tracking-[0.25em]">{t.walkHintLatin}</span>
+            {fine ? t.walkHint : t.walkHintCoarse}
+            <span className="hidden md:inline">
+              {' '}— <span className="tracking-[0.25em]">{t.walkHintLatin}</span>
+            </span>
           </span>
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex shrink-0 items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => setMapOpen(true)}
@@ -1345,15 +1430,23 @@ export function Museum() {
               aria-valuemin={1}
               aria-valuemax={COUNT}
               aria-valuenow={1}
-              className="h-0.5 w-24 bg-panel-deep md:w-[220px]"
+              className="h-0.5 w-12 bg-panel-deep min-[400px]:w-24 md:w-[220px]"
             >
               <div ref={progressRef} className="h-full w-0 bg-[linear-gradient(90deg,#d9a441,#ffe9b0)]" />
             </div>
           </div>
         </div>
 
+        {/* At the top it sat on the wordmark on a phone and on the frames on
+            a phone held sideways; there it moves down onto the HUD. */}
         {room && (
-          <div className="fixed inset-x-0 z-30 flex justify-center px-4" style={{ top: `calc(${TOP} + 24px)`, animation: 'fadeInUp .8s .4s ease both' }}>
+          <div
+            className="fixed inset-x-0 z-30 flex justify-center px-4"
+            style={{
+              ...(narrow || window.innerHeight < SHORT_PX ? { bottom: BAR + 14 } : { top: `calc(${TOP} + 24px)` }),
+              animation: 'fadeInUp .8s .4s ease both',
+            }}
+          >
             <div className="flex items-center gap-3 border border-line-museum bg-[rgba(10,8,6,.8)] px-4 py-2 sm:gap-4">
               <span className="font-display text-lg text-ink-museum">{t.studiesRoom}</span>
               <span className="hidden text-xs text-muted-dim sm:inline">{t.studiesHint}</span>
@@ -1365,6 +1458,26 @@ export function Museum() {
                 {t.studiesBack}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* The doorway chip: on a phone the left-wall doors are never in
+            view while the camera passes them, so the HUD offers them. */}
+        {door && narrow && focus == null && !room && (
+          <div
+            key={door}
+            className="pointer-events-none fixed inset-x-0 z-20 flex justify-center px-4"
+            style={{ bottom: BAR + 14, animation: 'fadeInUp .5s ease both' }}
+          >
+            {door === 'study' ? (
+              <button type="button" onClick={enterRoom} className={`${DOOR_CHIP} cursor-pointer`}>
+                {t.doorStudy}
+              </button>
+            ) : (
+              <Link to={ROUTES.sculpture} className={DOOR_CHIP}>
+                {t.doorSculpture}
+              </Link>
+            )}
           </div>
         )}
 
@@ -1390,7 +1503,10 @@ export function Museum() {
           {(titleId) => (
             <div
               className="fixed inset-0 flex items-center justify-center overflow-hidden text-center"
-              style={{ perspective: '1600px' }}
+              // --handle is the height of the two glowing door pulls. The copy
+              // is laid out around them — title above, button below — because
+              // centred on the doors it sat right across them at every size.
+              style={{ perspective: '1600px', '--handle': 'clamp(44px, 10vh, 90px)' } as CSSProperties}
             >
               <div
                 ref={doorStart}
@@ -1408,7 +1524,7 @@ export function Museum() {
               >
                 <div style={{ position: 'absolute', top: '6%', bottom: '46%', left: '14%', right: '12%', border: '2px solid rgba(217,164,65,.42)', background: 'linear-gradient(120deg, rgba(217,164,65,.06), transparent 60%)', boxShadow: 'inset 0 0 40px rgba(0,0,0,.5)' }} />
                 <div style={{ position: 'absolute', top: '58%', bottom: '8%', left: '14%', right: '12%', border: '2px solid rgba(217,164,65,.42)', boxShadow: 'inset 0 0 40px rgba(0,0,0,.5)' }} />
-                <div style={{ position: 'absolute', top: '50%', right: 30, width: 12, height: 90, marginTop: -45, borderRadius: 6, background: 'linear-gradient(#ffe9b0, #d9a441)', boxShadow: '0 0 20px rgba(255,225,160,.6)' }} />
+                <div style={{ position: 'absolute', top: 'calc(50% - var(--handle) / 2)', right: 30, width: 12, height: 'var(--handle)', borderRadius: 6, background: 'linear-gradient(#ffe9b0, #d9a441)', boxShadow: '0 0 20px rgba(255,225,160,.6)' }} />
               </div>
               <div
                 ref={doorEnd}
@@ -1426,34 +1542,43 @@ export function Museum() {
               >
                 <div style={{ position: 'absolute', top: '6%', bottom: '46%', right: '14%', left: '12%', border: '2px solid rgba(217,164,65,.42)', background: 'linear-gradient(-120deg, rgba(217,164,65,.06), transparent 60%)', boxShadow: 'inset 0 0 40px rgba(0,0,0,.5)' }} />
                 <div style={{ position: 'absolute', top: '58%', bottom: '8%', right: '14%', left: '12%', border: '2px solid rgba(217,164,65,.42)', boxShadow: 'inset 0 0 40px rgba(0,0,0,.5)' }} />
-                <div style={{ position: 'absolute', top: '50%', left: 30, width: 12, height: 90, marginTop: -45, borderRadius: 6, background: 'linear-gradient(#ffe9b0, #d9a441)', boxShadow: '0 0 20px rgba(255,225,160,.6)' }} />
+                <div style={{ position: 'absolute', top: 'calc(50% - var(--handle) / 2)', left: 30, width: 12, height: 'var(--handle)', borderRadius: 6, background: 'linear-gradient(#ffe9b0, #d9a441)', boxShadow: '0 0 20px rgba(255,225,160,.6)' }} />
               </div>
 
-              <div ref={introBody} className="relative w-full max-w-[720px] px-6">
-                <p className="absolute inset-x-0 -top-24 m-0 text-base text-muted-dim" style={{ wordSpacing: 8, animation: 'titleLine 7s ease both' }}>
-                  {t.museumIntro1}
-                </p>
-                <p className="absolute inset-x-0 -top-24 m-0 text-base text-muted-dim" style={{ wordSpacing: 8, animation: 'titleLine 7s 2.4s ease both' }}>
-                  {t.museumIntro2}
-                </p>
-                <h2
-                  id={titleId}
-                  className="mt-0 mb-4 font-display font-bold text-ink-museum"
-                  style={{ fontSize: 'clamp(36px, 7vw, 84px)', animation: 'titleStay 8s ease both' }}
-                >
-                  {t.museumIntroTitle}
-                </h2>
-                <p className="mt-0 mb-12 text-sm tracking-[0.25em] text-brand-gold" style={{ animation: 'btnIn 9s ease both' }}>
-                  {t.museumIntroSub}
-                </p>
-                <button
-                  type="button"
-                  onClick={openDoors}
-                  className="min-h-11 cursor-pointer border border-brand-gold bg-transparent px-10 py-4 text-base whitespace-nowrap text-brand-gold hover:bg-brand-gold hover:text-black"
-                  style={{ animation: 'btnIn 9.5s ease both' }}
-                >
-                  {t.museumEnter}
-                </button>
+              <div ref={introBody} className="absolute inset-0">
+                <div className="absolute inset-x-0 mx-auto max-w-[720px] px-6" style={{ bottom: 'calc(50% + var(--handle) / 2 + 20px)' }}>
+                  {/* The two opening lines play in the title's own place and
+                      are gone before it resolves, so a short landscape screen
+                      never has to fit them above it. */}
+                  <div className="relative">
+                    <p className="absolute inset-x-0 top-1/2 m-0 -translate-y-1/2 text-base text-muted-dim" style={{ wordSpacing: 8, animation: 'titleLine 7s ease both' }}>
+                      {t.museumIntro1}
+                    </p>
+                    <p className="absolute inset-x-0 top-1/2 m-0 -translate-y-1/2 text-base text-muted-dim" style={{ wordSpacing: 8, animation: 'titleLine 7s 2.4s ease both' }}>
+                      {t.museumIntro2}
+                    </p>
+                    <h2
+                      id={titleId}
+                      className="mt-0 mb-3 font-display leading-[1.15] font-bold text-balance text-ink-museum sm:mb-4"
+                      style={{ fontSize: 'clamp(34px, min(8vw, 10vh), 84px)', animation: 'titleStay 8s ease both' }}
+                    >
+                      {t.museumIntroTitle}
+                    </h2>
+                  </div>
+                  <p className="m-0 text-xs tracking-[0.25em] text-brand-gold sm:text-sm" style={{ animation: 'btnIn 9s ease both' }}>
+                    {t.museumIntroSub}
+                  </p>
+                </div>
+                <div className="absolute inset-x-0 px-6" style={{ top: 'calc(50% + var(--handle) / 2 + 20px)' }}>
+                  <button
+                    type="button"
+                    onClick={openDoors}
+                    className="min-h-11 cursor-pointer border border-brand-gold bg-[rgba(10,8,6,.55)] px-10 py-4 text-base whitespace-nowrap text-brand-gold hover:bg-brand-gold hover:text-black"
+                    style={{ animation: 'btnIn 9.5s ease both' }}
+                  >
+                    {t.museumEnter}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1483,11 +1608,26 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
   // side -1 puts the painting on the screen's left, so the reading panel goes
   // on the right, and vice versa.
   const onRight = side === -1
+  // On a phone the engine centres the painting in the window above the sheet
+  // (sheetWindow), so the clear hole in the blurred backdrop follows it there.
+  const win = sheetWindow(window.innerWidth, window.innerHeight)
   const holeX = narrow ? '50%' : onRight ? '30%' : '70%'
+  const holeY = narrow ? `${((win.mid / window.innerHeight) * 100).toFixed(1)}%` : '46%'
+  const holeR = narrow ? `60% ${Math.max(16, ((win.bottom - win.top) / window.innerHeight) * 72).toFixed(1)}%` : '46% 70%'
+  const holeRShade = narrow ? holeR : '46% 68%'
+  // A phone on its side has the desktop layout with a third of the height:
+  // the panel keeps its side but loses the display sizes.
+  const compact = !narrow && window.innerHeight < SHORT_PX
 
   const sideHeight = `calc(100% - ${TOP} - ${String(BAR)}px)`
+  // Sideways on a phone the panel is 286px tall; wider lines are what keep
+  // the note and both buttons inside it without a scroll nobody would find.
+  const sideWidth = compact ? 'min(540px, 50vw)' : 'min(460px, 44vw)'
+  const sheetHeight = `min(${String(SHEET.FRAC * 100)}%, ${String(SHEET.MAX)}px)`
   const strip: CSSProperties = narrow
-    ? { position: 'fixed', top: TOP, left: 0, right: 0, height: '34%', zIndex: 26 }
+    ? // Exactly the window the painting is framed in: tapping the painting
+      // (or the dark around it) goes back to the walk.
+      { position: 'fixed', top: TOP, left: 0, right: 0, height: `calc(100% - ${TOP} - ${String(BAR)}px - ${sheetHeight})`, zIndex: 26 }
     : onRight
       ? { position: 'fixed', top: TOP, left: 0, width: '10%', height: sideHeight, zIndex: 26 }
       : { position: 'fixed', top: TOP, right: 0, width: '10%', height: sideHeight, zIndex: 26 }
@@ -1508,22 +1648,25 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
           left: 0,
           right: 0,
           bottom: BAR,
-          height: 'min(56%, 400px)',
-          background: 'linear-gradient(to top, rgba(10,8,6,0), rgba(10,8,6,.95) 24%)',
+          height: sheetHeight,
+          // Solid from the top edge down: the old fade left the first lines of
+          // copy floating over the painting's lower frame.
+          background: 'linear-gradient(to bottom, rgba(10,8,6,.9), rgba(10,8,6,.97) 30%)',
+          borderTop: '1px solid rgba(217,164,65,.35)',
         }
       : onRight
         ? {
             top: TOP,
             bottom: BAR,
             right: 0,
-            width: 'min(460px, 44vw)',
+            width: sideWidth,
             background: 'linear-gradient(to right, rgba(10,8,6,0), rgba(10,8,6,.95) 24%)',
           }
         : {
             top: TOP,
             bottom: BAR,
             left: 0,
-            width: 'min(460px, 44vw)',
+            width: sideWidth,
             background: 'linear-gradient(to left, rgba(10,8,6,0), rgba(10,8,6,.95) 24%)',
           }),
   }
@@ -1549,11 +1692,11 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                 // The global prefers-reduced-motion rule collapses it.
                 animation: 'worldZoom 22s ease-in-out infinite alternate',
                 willChange: 'transform',
-                maskImage: `radial-gradient(ellipse 46% 70% at ${holeX} 46%, transparent 60%, #000 86%)`,
-                WebkitMaskImage: `radial-gradient(ellipse 46% 70% at ${holeX} 46%, transparent 60%, #000 86%)`,
+                maskImage: `radial-gradient(ellipse ${holeR} at ${holeX} ${holeY}, transparent 60%, #000 86%)`,
+                WebkitMaskImage: `radial-gradient(ellipse ${holeR} at ${holeX} ${holeY}, transparent 60%, #000 86%)`,
               }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 46% 68% at ${holeX} 46%, transparent 58%, rgba(5,4,3,.85) 92%)` }} />
+            <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse ${holeRShade} at ${holeX} ${holeY}, transparent 58%, rgba(5,4,3,.85) 92%)` }} />
             <div
               style={{
                 position: 'absolute',
@@ -1561,7 +1704,7 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                 ...(onRight ? { left: '-1%' } : { right: '-1%' }),
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
-                fontSize: narrow ? 78 : 170,
+                fontSize: narrow || compact ? 78 : 170,
                 lineHeight: 1,
                 color: 'transparent',
                 WebkitTextStroke: '1px rgba(239,231,216,.22)',
@@ -1578,8 +1721,16 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
           <button type="button" onClick={onClose} aria-label={t.backToWalk} style={{ ...strip, cursor: 'pointer', background: 'none', border: 0 }} />
 
           <div data-panel style={panel}>
-            <div style={{ position: 'relative', padding: narrow ? '26px 24px' : '40px 52px', width: '100%', boxSizing: 'border-box', marginBlock: 'auto' }}>
-              {!narrow && (
+            <div
+              style={{
+                position: 'relative',
+                padding: narrow ? '22px 20px 18px' : compact ? '14px 24px' : '40px 52px',
+                width: '100%',
+                boxSizing: 'border-box',
+                marginBlock: 'auto',
+              }}
+            >
+              {!narrow && !compact && (
                 <div
                   aria-hidden="true"
                   style={{
@@ -1596,35 +1747,54 @@ function FocusPanel({ index, narrow, onClose }: { index: number; narrow: boolean
                   {orderLabel(art.order)}
                 </div>
               )}
-              <div aria-hidden="true" style={{ width: 56, height: 3, background: 'linear-gradient(90deg, #d9a441, #ffe9b0)', marginBottom: 22, animation: 'fadeInUp .7s .15s ease both' }} />
-              <p style={{ margin: '0 0 10px', fontSize: 13, color: '#d9a441', animation: 'fadeInUp .7s .25s ease both' }}>
+              {!compact && (
+                <div aria-hidden="true" style={{ width: 56, height: 3, background: 'linear-gradient(90deg, #d9a441, #ffe9b0)', marginBottom: narrow ? 14 : 22, animation: 'fadeInUp .7s .15s ease both' }} />
+              )}
+              <p style={{ margin: '0 0 8px', fontSize: 13, color: '#d9a441', animation: 'fadeInUp .7s .25s ease both' }}>
                 {orderLabel(art.order)} · <span style={{ letterSpacing: 2 }}>{captionMeta(art)}</span>
               </p>
               <h2
                 id={titleId}
-                style={{ margin: '0 0 20px', fontFamily: 'var(--font-display)', fontSize: narrow ? 32 : 52, fontWeight: 700, lineHeight: 1.25, animation: 'fadeInUp .7s .35s ease both' }}
+                style={{
+                  margin: narrow || compact ? '0 0 12px' : '0 0 20px',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: narrow ? 32 : compact ? 34 : 52,
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  animation: 'fadeInUp .7s .35s ease both',
+                }}
               >
                 {name}
               </h2>
-              <p style={{ margin: '0 0 22px', fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: narrow ? 16 : 19, lineHeight: 2, color: '#d8c9a4', animation: 'fadeInUp .7s .45s ease both' }}>
+              <p
+                style={{
+                  margin: compact ? '0 0 10px' : narrow ? '0 0 14px' : '0 0 22px',
+                  fontFamily: 'var(--font-display)',
+                  fontStyle: 'italic',
+                  fontSize: compact ? 16 : narrow ? 17 : 19,
+                  lineHeight: compact ? 1.5 : narrow ? 1.7 : 2,
+                  color: '#d8c9a4',
+                  animation: 'fadeInUp .7s .45s ease both',
+                }}
+              >
                 « {note(art)} »
               </p>
-              <p style={{ margin: '0 0 30px', fontSize: 13, color: '#8d7c58', animation: 'fadeInUp .7s .55s ease both' }}>
+              <p style={{ margin: compact ? '0 0 12px' : narrow ? '0 0 18px' : '0 0 30px', fontSize: 13, color: '#8d7c58', animation: 'fadeInUp .7s .55s ease both' }}>
                 {sizeLabel(art)} · {t.uniqueSigned}
               </p>
-              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', animation: 'fadeInUp .7s .65s ease both' }}>
+              <div style={{ display: 'flex', gap: narrow ? 10 : 14, flexWrap: 'wrap', animation: 'fadeInUp .7s .65s ease both' }}>
                 <a
                   href={PORTFOLIO_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: 14, padding: '12px 26px', border: '1px solid #d9a441', color: '#d9a441' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: 14, padding: narrow ? '10px 16px' : '12px 26px', border: '1px solid #d9a441', color: '#d9a441' }}
                 >
                   {t.askAbout}
                 </a>
                 <button
                   type="button"
                   onClick={onClose}
-                  style={{ minHeight: 44, font: 'inherit', fontSize: 14, padding: '12px 26px', background: 'none', border: '1px solid #4a3c22', color: '#cbbc98', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ minHeight: 44, font: 'inherit', fontSize: 14, padding: narrow ? '10px 16px' : '12px 26px', background: 'none', border: '1px solid #4a3c22', color: '#cbbc98', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
                   {t.backToWalk}
                 </button>

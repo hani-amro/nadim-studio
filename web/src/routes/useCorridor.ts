@@ -21,11 +21,109 @@ import { CORRIDOR, COUNT, nearestIndex, paintingZ } from '../data/artworks'
  *  fade is driven by raw camera depth instead of a painting index. */
 const MIRROR_Z = -12150
 
+/** Depth of the gallery-map sign just inside the entrance. */
+export const PLAQUE_Z = -1500
+/** On a phone the sign fades out between these distances ahead of the
+ *  camera — gone before the drift swings the camera across its path. */
+const PLAQUE_FADE = { FROM: 750, TO: 300 } as const
+
 /** How far back from a painting the camera parks when it is opened. */
 const FOCUS_STANDOFF = 780
 
 /** Matches the `transform 1.3s` on a painting frame, plus a little slack. */
 const TRANSITION_MS = 1400
+
+/** The scene's lens. Museum.tsx puts these on the world container; the
+ *  narrow-screen framing below has to project through the same numbers. */
+export const PERSPECTIVE = 1150
+export const ORIGIN_Y = 0.46
+
+/** Height of each letterbox bar (the HUD at the bottom). */
+export const LETTERBOX = 52
+
+/** Below this width the museum switches to its phone layout: the bottom info
+ *  sheet, the drifting camera and the larger in-world type. */
+export const NARROW_PX = 760
+
+/** The phone info sheet: `min(FRAC of the screen, MAX px)` tall, sitting on
+ *  the bottom letterbox. The focus framing has to know it to keep the
+ *  painting clear of it. */
+export const SHEET = { FRAC: 0.5, MAX: 360 } as const
+
+/** The wordmark row hanging under the top letterbox (py-4 + one line). The
+ *  framed painting starts below it, not behind it. */
+const HEADER_PX = 60
+
+/** A painting's gilt frame, from Museum.tsx: 620 wide, 496 tall, its centre
+ *  96px above the painting element's anchor line. */
+const FRAME_W = 620
+const FRAME_H = 496
+const FRAME_CY = -96
+/** Where the paintings hang, either side of the carpet. */
+const HANG_X = 470
+
+/**
+ * How far the camera drifts toward the wall on a phone.
+ *
+ * A portrait screen sees about 30 degrees of corridor where a desktop sees 64,
+ * so with the camera on the carpet every painting is half off the screen as it
+ * comes up. Shrinking the world until it fits would take the captions down to
+ * three or four pixels. Instead the camera dollies toward each painting as it
+ * approaches and across to the next one — the walk zig-zags wall to wall.
+ */
+const SWAY = 300
+/** How far ahead a painting is when the drift peaks on it. */
+const SWAY_LEAD = 900
+/** Depth over which the drift eases in from the entrance. */
+const SWAY_IN = 700
+
+/**
+ * The doorways off the corridor, as camera-depth windows.
+ *
+ * Both open in the left wall at x≈-880 — the study room at depth 5400, the
+ * sculpture archway at 6820. A portrait screen never has that wall in view
+ * while it is near them, so on a phone the HUD offers the door instead while
+ * the camera is passing it.
+ */
+export type Door = 'study' | 'sculpture'
+const DOORS: readonly { door: Door; from: number; to: number }[] = [
+  { door: 'study', from: 4500, to: 6000 },
+  { door: 'sculpture', from: 6000, to: 7600 },
+]
+
+/** The top of the corridor chrome in px: the taller of the letterbox and the
+ *  demo notice, which is what `--museum-top` resolves to in CSS. */
+export function museumTopPx(): number {
+  const demo = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--demo-bar'))
+  return Math.max(LETTERBOX, Number.isFinite(demo) ? demo : 0)
+}
+
+/** The clear window above the phone info sheet, in screen px. */
+export function sheetWindow(w: number, h: number): { top: number; bottom: number; mid: number; width: number } {
+  const top = museumTopPx() + HEADER_PX
+  const bottom = h - LETTERBOX - Math.min(h * SHEET.FRAC, SHEET.MAX) - 12
+  return { top, bottom, mid: (top + bottom) / 2, width: w - 24 }
+}
+
+/** Lateral camera offset for a phone at walk depth `cam` (world translateX). */
+function walkSway(cam: number): number {
+  const f = (cam + SWAY_LEAD - CORRIDOR.FIRST) / CORRIDOR.STEP
+  const last = COUNT - 1
+  // Painting 0 hangs on the left, so the world shifts right (+) to face it;
+  // cos(πf) then swings the camera to the opposite wall for each next piece.
+  // The first SWAY_IN of the walk eases out from the carpet, so the doors
+  // open onto the same square view of the hall a desktop gets.
+  if (f <= last) return SWAY * Math.cos(Math.PI * Math.max(0, f)) * smooth(cam / SWAY_IN)
+  // Past the last painting the camera settles back onto the carpet, square to
+  // the end wall, the mirror and the lectern.
+  return SWAY * Math.cos(Math.PI * last) * (1 - smooth((f - last) / 0.6))
+}
+
+/** Smoothstep, clamped to 0..1. */
+function smooth(t: number): number {
+  const c = Math.max(0, Math.min(1, t))
+  return c * c * (3 - 2 * c)
+}
 
 /** The discrete UI state the engine has to respect. */
 export interface CorridorUi {
@@ -41,6 +139,9 @@ export interface CorridorHandlers {
   onFocus: (i: number | null) => void
   onRoom: (open: boolean) => void
   onNarrow: (narrow: boolean) => void
+  /** The doorway the camera is passing on a phone, or null. Fired on change
+   *  only, so it costs a render per doorway, not one per frame. */
+  onDoor: (door: Door | null) => void
 }
 
 type Register<T extends HTMLElement> = (el: T | null) => void
@@ -57,6 +158,7 @@ export interface Corridor {
   registerGlow: (i: number) => Register<HTMLDivElement>
   registerBay: (key: string, z: number, stagger: boolean) => Register<HTMLDivElement>
   registerMirror: Register<HTMLDivElement>
+  registerPlaque: Register<HTMLDivElement>
   /** Park in front of painting `i` and report it as focused. */
   open: (i: number) => void
   /** Leave the focus panel and hand the camera back to the scroll position. */
@@ -77,6 +179,9 @@ interface Motion {
   target: number
   x: number
   targetX: number
+  /** Vertical lift, used only to frame an opened painting on a phone. */
+  y: number
+  targetY: number
   ry: number
   tRy: number
   rx: number
@@ -88,7 +193,9 @@ interface Motion {
   tPrev: number
   lastPw: string
   lastMirror: number
+  lastPlaque: number
   lastNum: number
+  lastDoor: Door | null
 }
 
 interface Bay {
@@ -113,6 +220,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
   const bayOn = useRef(new Map<string, boolean>())
   const reveal = useRef<HTMLElement[]>([])
   const mirrorEl = useRef<HTMLElement | null>(null)
+  const plaqueEl = useRef<HTMLElement | null>(null)
   const lastOp = useRef<number[]>([])
   const lastGlow = useRef<number[]>([])
 
@@ -127,6 +235,8 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     target: 0,
     x: 0,
     targetX: 0,
+    y: 0,
+    targetY: 0,
     ry: 0,
     tRy: 0,
     rx: 0,
@@ -138,7 +248,9 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     tPrev: 0,
     lastPw: '',
     lastMirror: -1,
+    lastPlaque: -1,
     lastNum: -1,
+    lastDoor: null,
   })
 
   // Handlers and UI read by listeners that are registered once. Updated in a
@@ -160,6 +272,48 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
   })
 
   const reducedMotion = useCallback(() => motionQuery.current?.matches === true, [])
+
+  // Read straight off the window, not from `ui.narrow`: that one only updates
+  // after React commits, and the listeners need the answer in the same event.
+  const narrowNow = useCallback(() => window.innerWidth < NARROW_PX, [])
+
+  /** Where the camera stands sideways while walking (not focused, not in the
+   *  study room). */
+  const walkX = useCallback((cam: number) => (narrowNow() ? walkSway(cam) : 0), [narrowNow])
+
+  /**
+   * Camera pose that shows painting `i`.
+   *
+   * Desktop keeps the original move: step 210px toward the wall and stop 780px
+   * back, leaving the far half of the screen for the side panel. On a phone the
+   * info sheet takes the bottom of the screen, so the painting is centred in
+   * the window above it — the camera stands square in front of it, at whatever
+   * distance makes the frame fill that window, lifted so it sits in the middle.
+   */
+  const focusPose = useCallback(
+    (i: number): { x: number; y: number; cam: number } => {
+      const side = i % 2 === 0 ? -1 : 1
+      const z = paintingZ(i)
+      if (!narrowNow()) return { x: -side * 210, y: 0, cam: -z - FOCUS_STANDOFF }
+
+      const w = window.innerWidth
+      const h = window.innerHeight
+      const zoom = m.current.zoom
+      const win = sheetWindow(w, h)
+      // k is the perspective scale p / (p - z) the frame needs to fill the
+      // window; capped so a tall phone never pulls it nearer than the lens.
+      const k = Math.max(
+        0.25,
+        Math.min(1.4, win.width / (FRAME_W * zoom), (win.bottom - win.top) / (FRAME_H * zoom)),
+      )
+      const standoff = PERSPECTIVE / k - PERSPECTIVE
+      // Solve screenY = originY + (centreOffset + (FRAME_CY + y) * zoom) * k
+      // for the world lift y that lands the frame's centre on win.mid.
+      const y = ((win.mid - ORIGIN_Y * h) / k - (0.5 - ORIGIN_Y) * h) / zoom - FRAME_CY
+      return { x: -side * HANG_X, y, cam: -z - standoff }
+    },
+    [narrowNow],
+  )
 
   const later = useCallback((fn: () => void, ms: number) => {
     const id = setTimeout(() => {
@@ -203,6 +357,11 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     if (!el) m.current.lastMirror = -1
   }, [])
 
+  const registerPlaque = useCallback<Register<HTMLDivElement>>((el) => {
+    plaqueEl.current = el
+    if (!el) m.current.lastPlaque = -1
+  }, [])
+
   /** Put the 1.3s transition on painting `i` before React swaps its transform. */
   const armTransition = useCallback(
     (i: number) => {
@@ -239,31 +398,33 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     // with the viewport, and a stale scrollMax skews the whole walk.
     s.scrollMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
     s.target = (window.scrollY / s.scrollMax) * CORRIDOR.DEPTH
+    s.targetX = walkX(s.target)
     s.needsPass = true
-  }, [])
+  }, [walkX])
 
   const open = useCallback(
     (i: number) => {
       const idx = Math.max(0, Math.min(COUNT - 1, i))
-      const side = idx % 2 === 0 ? -1 : 1
-      const z = paintingZ(idx)
       const prev = latest.current.ui.focus
       if (prev != null && prev !== idx) settleTransition(prev)
       armTransition(idx)
       const s = m.current
-      s.targetX = -side * 210
-      s.target = -z - FOCUS_STANDOFF
+      const pose = focusPose(idx)
+      s.targetX = pose.x
+      s.targetY = pose.y
+      s.target = pose.cam
       s.needsPass = true
       latest.current.handlers.onFocus(idx)
     },
-    [armTransition, settleTransition],
+    [armTransition, settleTransition, focusPose],
   )
 
   const close = useCallback(() => {
     const f = latest.current.ui.focus
     if (f != null) settleTransition(f)
     const s = m.current
-    s.targetX = 0
+    s.targetX = walkX(s.target)
+    s.targetY = 0
     s.needsPass = true
     latest.current.handlers.onFocus(null)
     // The scrollbar has to be snapped to wherever the camera actually parked,
@@ -279,7 +440,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       s.needsPass = true
       window.scrollTo({ top: (parked / CORRIDOR.DEPTH) * max })
     }, 0)
-  }, [later, settleTransition])
+  }, [later, settleTransition, walkX])
 
   const enterRoom = useCallback(() => {
     const u = latest.current.ui
@@ -315,9 +476,10 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     const s = m.current
     s.cam = -950
     s.target = 0
+    s.targetX = walkX(0)
     s.needsPass = true
     window.scrollTo({ top: 0 })
-  }, [])
+  }, [walkX])
 
   useEffect(() => {
     const s = m.current
@@ -325,7 +487,9 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
 
     const writeWorld = () => {
       const el = worldRef.current
-      if (el) el.style.transform = `translateX(${s.x.toFixed(1)}px) translateZ(${s.cam.toFixed(1)}px)`
+      if (el) {
+        el.style.transform = `translate3d(${s.x.toFixed(1)}px, ${s.y.toFixed(1)}px, ${s.cam.toFixed(1)}px)`
+      }
     }
     const writeLook = () => {
       const el = lookRef.current
@@ -349,8 +513,19 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       s.zoom = Math.min(1, Math.max(0.62, window.innerWidth / 1250))
       writeLook()
       s.needsPass = true
-      const narrow = window.innerWidth < 760
-      if (narrow !== latest.current.ui.narrow) latest.current.handlers.onNarrow(narrow)
+      const narrow = narrowNow()
+      const u = latest.current.ui
+      // A phone turned sideways (or a window dragged narrower) changes the
+      // framing: re-aim at the open painting, or at the walk's drift line.
+      if (u.focus != null) {
+        const pose = focusPose(u.focus)
+        s.targetX = pose.x
+        s.targetY = pose.y
+        s.target = pose.cam
+      } else if (!u.room) {
+        s.targetX = walkX(s.target)
+      }
+      if (narrow !== u.narrow) latest.current.handlers.onNarrow(narrow)
     }
 
     /** True whenever the scene must hold still: an overlay is up, or the
@@ -372,7 +547,11 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       if (parallaxBlocked()) return
       const touch = e.touches[0]
       if (!touch) return
-      s.tRy = (touch.clientX / window.innerWidth - 0.5) * -7
+      // On a phone the swipe that walks is also the touch read here, so the
+      // thumb's side of the screen would swing the corridor on every scroll.
+      // ±3.5° is an eighth of a portrait screen's field of view; keep a hint.
+      const reach = narrowNow() ? -2.4 : -7
+      s.tRy = (touch.clientX / window.innerWidth - 0.5) * reach
     }
 
     // iOS 13+ only delivers this after an explicit permission grant behind a
@@ -448,6 +627,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       const idle = !(
         Math.abs(s.target - s.cam) > 0.3 ||
         Math.abs(s.targetX - s.x) > 0.3 ||
+        Math.abs(s.targetY - s.y) > 0.3 ||
         Math.abs(s.tRy - s.ry) > 0.006 ||
         Math.abs(s.tRx - s.rx) > 0.006
       )
@@ -471,12 +651,14 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
           // glide. The CSS-level rule in index.css cannot reach a rAF loop.
           s.cam = s.target
           s.x = s.targetX
+          s.y = s.targetY
           s.ry = s.tRy
           s.rx = s.tRx
         } else {
           const ez = (b: number) => 1 - Math.pow(1 - b, dt / 16.7)
           s.cam += (s.target - s.cam) * ez(0.085)
           s.x += (s.targetX - s.x) * ez(0.075)
+          s.y += (s.targetY - s.y) * ez(0.075)
           s.ry += (s.tRy - s.ry) * ez(0.07)
           s.rx += (s.tRx - s.rx) * ez(0.07)
         }
@@ -501,6 +683,15 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
           counterRef.current.textContent = `${n} / ${COUNT}`
         }
         railRef.current?.setAttribute('aria-valuenow', String(n))
+      }
+
+      let door: Door | null = null
+      if (narrowNow() && u.focus == null && !u.room && !u.introVisible) {
+        door = DOORS.find((d) => s.cam >= d.from && s.cam < d.to)?.door ?? null
+      }
+      if (door !== s.lastDoor) {
+        s.lastDoor = door
+        latest.current.handlers.onDoor(door)
       }
 
       for (let k = 0; k < COUNT; k++) {
@@ -569,6 +760,21 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
           mirrorEl.current.style.opacity = String(mo)
         }
       }
+
+      if (plaqueEl.current) {
+        // Desktop keeps the sign solid: the camera stays on the carpet there
+        // and it leaves the frame on its own.
+        const ahead = -(PLAQUE_Z + s.cam)
+        const po = narrowNow()
+          ? Math.round(smooth((ahead - PLAQUE_FADE.TO) / (PLAQUE_FADE.FROM - PLAQUE_FADE.TO)) * 20) / 20
+          : 1
+        if (s.lastPlaque !== po) {
+          s.lastPlaque = po
+          plaqueEl.current.style.opacity = String(po)
+          // Invisible must also mean untappable and out of the tab order.
+          plaqueEl.current.style.visibility = po === 0 ? 'hidden' : ''
+        }
+      }
     }
     raf.current = requestAnimationFrame(loop)
 
@@ -592,7 +798,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       revealAtSetup.length = 0
       bayOnAtSetup.clear()
     }
-  }, [exitRoom, goTo, open, syncFromScroll])
+  }, [exitRoom, goTo, open, syncFromScroll, narrowNow, focusPose, walkX])
 
   // Every member is stable, so the handle itself is memoised too: callers put
   // it in dependency arrays, and a fresh object each render would defeat them.
@@ -607,6 +813,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       registerGlow,
       registerBay,
       registerMirror,
+      registerPlaque,
       open,
       close,
       enterRoom,
@@ -621,6 +828,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       registerGlow,
       registerBay,
       registerMirror,
+      registerPlaque,
       open,
       close,
       enterRoom,
