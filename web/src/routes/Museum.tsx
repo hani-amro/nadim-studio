@@ -25,10 +25,13 @@ import { useFinePointer } from '../hooks/useFinePointer'
 import { Bays } from './museum/Bays'
 import { Guestbook, type GuestNote } from './museum/Guestbook'
 import { MapModal } from './museum/MapModal'
+import { LOW, PAINTING_LOW } from './museum/resolution'
+import { Surface } from './museum/Surface'
 import {
   LETTERBOX,
   NARROW_PX,
   ORIGIN_Y,
+  PARKED,
   PERSPECTIVE,
   PLAQUE_Z,
   SHEET,
@@ -95,14 +98,6 @@ function writeNotes(notes: readonly GuestNote[]): NoticeCode | null {
   }
 }
 
-const DUST = Array.from({ length: 7 }, (_, i) => ({
-  x: `${(i * 137) % 100}%`,
-  y: `${25 + ((i * 53) % 70)}%`,
-  size: 1 + (i % 3),
-  dur: `${6 + (i % 6) * 2}s`,
-  delay: `${-(i * 1.2)}s`,
-}))
-
 /** Where the three empty study frames hang on the study-room wall. */
 const STUDY_FRAMES = [200, 615, 1030]
 
@@ -115,6 +110,8 @@ const DOOR_CHIP =
 
 const SCENE_BACKDROP ='radial-gradient(ellipse at 50% 40%, #2b2012 0%, #171008 45%, #0a0806 78%)'
 
+/** A culled group in the world. Like the corridor bays it carries no
+ *  transform here: the engine owns that, to give it birth and to park it. */
 const PLINTH: CSSProperties = {
   position: 'absolute',
   left: '50%',
@@ -156,13 +153,14 @@ export function Museum() {
   // ref — and a bay that re-registers loses the culling state the engine keeps
   // for it, so a static wall would blink every time an overlay opened.
   const paintingRefs = useMemo(() => ARTWORKS.map((_, i) => corridor.registerPainting(i)), [corridor])
+  const bodyRefs = useMemo(() => ARTWORKS.map((_, i) => corridor.registerBody(i)), [corridor])
   const glowRefs = useMemo(() => ARTWORKS.map((_, i) => corridor.registerGlow(i)), [corridor])
   const bayRefs = useMemo(
     () => ({
-      studyDoor: corridor.registerBay('study-door', -5400, false),
-      studyRoom: corridor.registerBay('study-room', -5500, false),
-      lectern: corridor.registerBay('lectern', -12500, false),
-      mapPlaque: corridor.registerBay('map-plaque', -650, false),
+      studyDoor: corridor.registerBay('study-door', -5400, { x: -878, interactive: true }),
+      studyRoom: corridor.registerBay('study-room', -5500, { x: -1750 }),
+      lectern: corridor.registerBay('lectern', -12500, { interactive: true }),
+      mapPlaque: corridor.registerBay('map-plaque', -650, { interactive: true }),
     }),
     [corridor],
   )
@@ -238,7 +236,10 @@ export function Museum() {
   }
 
   const focusArt = focus == null ? undefined : ARTWORKS[focus]
-  const hidden: CSSProperties = { visibility: focus != null ? 'hidden' : 'visible' }
+  // While a painting is open the rest of the hall steps out of the way. It is
+  // parked rather than hidden, for the reason PARKED gives: hiding destroys
+  // the layers, and the floor ring would be redrawn right under the camera.
+  const away = focus != null
 
   return (
     <>
@@ -278,7 +279,10 @@ export function Museum() {
         >
           <div
             ref={lookRef}
-            style={{ position: 'absolute', inset: 0, transformStyle: 'preserve-3d', pointerEvents: 'none' }}
+            // will-change here and on the world below: both transforms are
+            // rewritten on every frame of the walk, and only a promoted
+            // transform can be updated without re-laying-out the layer tree.
+            style={{ position: 'absolute', inset: 0, transformStyle: 'preserve-3d', pointerEvents: 'none', willChange: 'transform' }}
           >
             <div
               ref={worldRef}
@@ -306,6 +310,7 @@ export function Museum() {
                     height: 700,
                     margin: '-400px -220px',
                     transform: 'translateX(-878px) translateZ(-5400px) rotateY(90deg) translateZ(6px)',
+                    willChange: 'transform',
                     backfaceVisibility: 'hidden',
                     border: '4px solid rgba(217,164,65,.6)',
                     borderRadius: '220px 220px 0 0',
@@ -337,32 +342,26 @@ export function Museum() {
               </div>
 
               <div ref={studyRoomRef} style={PLINTH}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: 340,
-                    width: 1500,
-                    height: 1600,
-                    marginLeft: -2500,
-                    transform: 'translateZ(-4700px) rotateX(-90deg)',
-                    transformOrigin: 'top center',
+                <Surface
+                  w={1500}
+                  h={1600}
+                  top={340}
+                  marginLeft={-2500}
+                  hinged
+                  transform="translateZ(-4700px) rotateX(-90deg)"
+                  paint={{
                     background:
                       'repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 3px, transparent 3px 300px), linear-gradient(#1c1409, #0d0a06)',
                   }}
                 />
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: -556,
-                    width: 1500,
-                    height: 1600,
-                    marginLeft: -2500,
-                    transform: 'translateZ(-4700px) rotateX(-90deg)',
-                    transformOrigin: 'top center',
-                    background: 'linear-gradient(#100b07, #1d1409)',
-                  }}
+                <Surface
+                  w={1500}
+                  h={1600}
+                  top={-556}
+                  marginLeft={-2500}
+                  hinged
+                  transform="translateZ(-4700px) rotateX(-90deg)"
+                  paint={{ background: 'linear-gradient(#100b07, #1d1409)' }}
                 >
                   <div
                     style={{
@@ -377,29 +376,27 @@ export function Museum() {
                         'radial-gradient(ellipse, rgba(255,238,196,.5), rgba(255,214,130,.1) 58%, transparent 80%)',
                     }}
                   />
-                </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: -556,
-                    width: 1600,
-                    height: 900,
-                    marginLeft: -800,
-                    transform: 'translateX(-2500px) translateZ(-5500px) rotateY(90deg)',
-                    backfaceVisibility: 'hidden',
-                    background: 'linear-gradient(180deg, #180f08 0 69%, #2b2012 69% 72%, #0e0905 72% 100%)',
-                  }}
+                </Surface>
+                <Surface
+                  w={1600}
+                  h={900}
+                  top={-556}
+                  marginLeft={-800}
+                  backfaceHidden
+                  transform="translateX(-2500px) translateZ(-5500px) rotateY(90deg)"
+                  paint={{ background: 'linear-gradient(180deg, #180f08 0 69%, #2b2012 69% 72%, #0e0905 72% 100%)' }}
                 />
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: -556,
-                    width: 1500,
-                    height: 900,
-                    marginLeft: -2500,
-                    transform: 'translateZ(-6300px)',
+                {/* The back wall carries lettering and the three frames, so it
+                    is only halved: from where the camera stands in the room
+                    it is shown at under half size anyway. */}
+                <Surface
+                  w={1500}
+                  h={900}
+                  top={-556}
+                  marginLeft={-2500}
+                  low={2}
+                  transform="translateZ(-6300px)"
+                  paint={{
                     background:
                       'repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 10px, rgba(239,231,216,.035) 10px 42px, transparent 42px 300px), linear-gradient(180deg, #1d1409 0 69%, #2b2012 69% 72%, #120c06 72% 100%)',
                   }}
@@ -472,7 +469,7 @@ export function Museum() {
                   >
                     {t.studiesEmpty}
                   </p>
-                </div>
+                </Surface>
                 {/* The work table under the window. */}
                 <div
                   style={{
@@ -483,6 +480,7 @@ export function Museum() {
                     height: 360,
                     marginLeft: -2010,
                     transform: 'translateZ(-5320px) rotateX(-90deg)',
+                    willChange: 'transform',
                     transformOrigin: 'top center',
                     border: '1px solid rgba(198,224,235,.4)',
                     boxSizing: 'border-box',
@@ -498,6 +496,7 @@ export function Museum() {
                     height: 220,
                     marginLeft: -2010,
                     transform: 'translateZ(-5320px)',
+                    willChange: 'transform',
                     border: '1px solid rgba(217,164,65,.35)',
                     boxSizing: 'border-box',
                     background: 'linear-gradient(rgba(198,224,235,.1), rgba(198,224,235,.03))',
@@ -512,6 +511,7 @@ export function Museum() {
                     height: 360,
                     marginLeft: -2010,
                     transform: 'translateZ(-5320px) rotateX(-90deg)',
+                    willChange: 'transform',
                     transformOrigin: 'top center',
                     background: 'linear-gradient(#2b2012, #17100a)',
                   }}
@@ -614,6 +614,7 @@ export function Museum() {
                     height: 520,
                     margin: '-180px -180px',
                     transform: 'translateX(520px) translateZ(-12500px) rotateY(-26deg)',
+                    willChange: 'transform',
                     transformStyle: 'preserve-3d',
                     cursor: 'pointer',
                     pointerEvents: 'auto',
@@ -644,6 +645,7 @@ export function Museum() {
                       height: 150,
                       marginLeft: -105,
                       transform: 'rotateX(-90deg)',
+                      willChange: 'transform',
                       transformOrigin: 'top center',
                       background: 'radial-gradient(ellipse at 50% 0%, #3a2e1a, #120c06 78%)',
                     }}
@@ -658,6 +660,7 @@ export function Museum() {
                       height: 230,
                       marginLeft: -170,
                       transform: 'rotateX(-56deg)',
+                      willChange: 'transform',
                       transformOrigin: 'bottom center',
                       background: 'linear-gradient(180deg, #4a3c22, #241a0c)',
                       borderTop: '3px solid #d9a441',
@@ -720,6 +723,7 @@ export function Museum() {
                     left: '50%',
                     top: '50%',
                     transform: `translateX(520px) translateZ(${String(PLAQUE_Z)}px) rotateY(-26deg)`,
+                    willChange: 'transform, opacity',
                     transformStyle: 'preserve-3d',
                   }}
                 >
@@ -732,6 +736,7 @@ export function Museum() {
                       height: 120,
                       marginLeft: -85,
                       transform: 'rotateX(-90deg)',
+                      willChange: 'transform',
                       transformOrigin: 'top center',
                       background: 'radial-gradient(ellipse at 50% 0%, #4a3c22, #120c06 76%)',
                     }}
@@ -866,6 +871,54 @@ export function Museum() {
                       pointerEvents: 'none',
                     }}
                   >
+                    {/* A painting is two GPU layers, not seven. The glow is
+                        one: a soft blur, drawn at 1/LOW and scaled back up,
+                        whose strength the engine changes as you approach.
+                        Everything else is the other: one flat texture, so
+                        fading it with distance is a single alpha and nothing
+                        inside it animates. The numeral, the plinth and the
+                        hanging rod used to stand a few pixels in front of or
+                        behind the frame, a depth nobody could see, and each
+                        one cost a texture of its own. */}
+                    <div
+                      aria-hidden="true"
+                      ref={glowRefs[i]}
+                      style={{
+                        position: 'absolute',
+                        top: 30 + (580 - 580 / LOW) / 2,
+                        left: '50%',
+                        width: 700 / LOW,
+                        height: 580 / LOW,
+                        transform: `translateX(-50%) translateZ(-14px) scale(${String(LOW)})`,
+                        background: 'radial-gradient(ellipse, rgba(255,214,130,.45), transparent 64%)',
+                        opacity: 0,
+                        willChange: 'transform, opacity',
+                      }}
+                    />
+                    <div
+                      ref={bodyRefs[i]}
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: 680 / PAINTING_LOW,
+                        height: 700 / PAINTING_LOW,
+                        transform: `scale(${String(PAINTING_LOW)})`,
+                        transformOrigin: '0 0',
+                        willChange: 'transform, opacity',
+                      }}
+                    >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: 680,
+                        height: 700,
+                        transform: `scale(${String(1 / PAINTING_LOW)})`,
+                        transformOrigin: '0 0',
+                      }}
+                    >
                     <div
                       aria-hidden="true"
                       style={{
@@ -881,20 +934,6 @@ export function Museum() {
                     />
                     <div
                       aria-hidden="true"
-                      ref={glowRefs[i]}
-                      style={{
-                        position: 'absolute',
-                        top: 30,
-                        left: '50%',
-                        width: 700,
-                        height: 580,
-                        transform: 'translateX(-50%) translateZ(-14px)',
-                        background: 'radial-gradient(ellipse, rgba(255,214,130,.45), transparent 64%)',
-                        opacity: 0,
-                      }}
-                    />
-                    <div
-                      aria-hidden="true"
                       style={{
                         position: 'absolute',
                         top: 30,
@@ -904,7 +943,6 @@ export function Museum() {
                         fontWeight: 700,
                         lineHeight: 1,
                         color: 'rgba(217,164,65,.14)',
-                        transform: 'translateZ(-90px)',
                       }}
                     >
                       {orderLabel(art.order)}
@@ -1012,7 +1050,6 @@ export function Museum() {
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontSize: narrow ? 40 : 20,
-                              animation: 'plusPulse 2.4s ease-out infinite',
                             }}
                           >
                             +
@@ -1029,7 +1066,6 @@ export function Museum() {
                         top: 702,
                         width: 626,
                         height: 20,
-                        transform: 'translateZ(40px)',
                         borderRadius: '0 0 60% 60% / 0 0 100% 100%',
                         background: 'linear-gradient(180deg, #a3242f, #5d1018)',
                         boxShadow: 'inset 0 3px 6px rgba(255,255,255,.12)',
@@ -1055,38 +1091,43 @@ export function Museum() {
                         </p>
                       )}
                     </div>
+                    </div>
+                    </div>
                   </div>
                 )
               })}
 
               {/* -- wing labels, rotunda, mirror and end wall ------------- */}
-              <div style={{ position: 'absolute', inset: 0, transformStyle: 'preserve-3d', pointerEvents: 'none', ...hidden }}>
-                <div style={{ position: 'absolute', left: '50%', top: 'calc(50% - 330px)', transform: 'translateZ(-1550px)', textAlign: 'center', width: 600, margin: '-60px -300px', opacity: 0.8 }}>
+              <div
+                inert={away}
+                style={{ position: 'absolute', inset: 0, transformStyle: 'preserve-3d', pointerEvents: 'none', transform: away ? PARKED : undefined }}
+              >
+                <div style={{ position: 'absolute', left: '50%', top: 'calc(50% - 330px)', transform: 'translateZ(-1550px)', willChange: 'transform', textAlign: 'center', width: 600, margin: '-60px -300px', opacity: 0.8 }}>
                   <p style={{ margin: '0 0 6px', fontSize: 13, color: '#9a8a68' }}>{t.wing1Label}</p>
                   <p style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 700, color: 'rgba(239,231,216,.85)' }}>{t.wing1}</p>
                 </div>
-                <div style={{ position: 'absolute', left: '50%', top: 'calc(50% - 330px)', transform: 'translateZ(-6820px)', textAlign: 'center', width: 600, margin: '-60px -300px', opacity: 0.8 }}>
+                <div style={{ position: 'absolute', left: '50%', top: 'calc(50% - 330px)', transform: 'translateZ(-6820px)', willChange: 'transform', textAlign: 'center', width: 600, margin: '-60px -300px', opacity: 0.8 }}>
                   <p style={{ margin: '0 0 6px', fontSize: 13, color: '#9a8a68' }}>{t.wing2Label}</p>
                   <p style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 700, color: 'rgba(239,231,216,.85)' }}>{t.wing2}</p>
                 </div>
-                <div
-                  aria-hidden="true"
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: 'calc(50% + 328px)',
-                    width: 940,
-                    height: 940,
-                    margin: '0 0 0 -470px',
-                    transform: 'translateZ(-6350px) rotateX(-90deg)',
-                    transformOrigin: 'top center',
+                {/* Two thin rings on the floor: halved, not quartered, so
+                    the lines survive. */}
+                <Surface
+                  w={940}
+                  h={940}
+                  top="calc(50% + 328px)"
+                  marginLeft={-470}
+                  hinged
+                  low={2}
+                  transform="translateZ(-6350px) rotateX(-90deg)"
+                  paint={{
                     border: '3px solid rgba(217,164,65,.5)',
                     borderRadius: '50%',
                     boxShadow: 'inset 0 0 80px rgba(217,164,65,.15)',
                   }}
                 >
                   <div style={{ position: 'absolute', inset: 180, border: '1px solid rgba(217,164,65,.35)', borderRadius: '50%' }} />
-                </div>
+                </Surface>
                 <div
                   aria-hidden="true"
                   style={{
@@ -1097,6 +1138,7 @@ export function Museum() {
                     height: 16,
                     margin: -8,
                     transform: 'translateZ(-6820px)',
+                    willChange: 'transform',
                     borderRadius: '50%',
                     background: '#ffe9b0',
                     boxShadow: '0 0 60px 24px rgba(255,225,160,.6)',
@@ -1113,6 +1155,7 @@ export function Museum() {
                     height: 800,
                     margin: '-450px -270px',
                     transform: 'translateX(-880px) translateZ(-6820px) rotateY(90deg) translateZ(4px)',
+                    willChange: 'transform',
                     backfaceVisibility: 'hidden',
                   }}
                 >
@@ -1169,6 +1212,7 @@ export function Museum() {
                     height: 700,
                     margin: '-360px -250px',
                     transform: 'translateX(-470px) translateZ(-12150px) rotateY(22deg)',
+                    willChange: 'transform, opacity',
                     opacity: 0,
                   }}
                 >
@@ -1249,6 +1293,7 @@ export function Museum() {
                     margin: narrow ? '-460px -270px' : '-350px -450px',
                     ...(narrow ? { background: 'linear-gradient(180deg, rgba(18,12,6,0), #120c06 34%)' } : {}),
                     transform: 'translateZ(-13000px)',
+                    willChange: 'transform',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -1344,26 +1389,22 @@ export function Museum() {
             </div>
           </div>
 
-          {DUST.map((d, i) => (
-            <div
-              key={i}
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                left: d.x,
-                top: d.y,
-                width: d.size,
-                height: d.size,
-                borderRadius: '50%',
-                background: '#ffe9b0',
-                opacity: 0,
-                animation: `dust ${d.dur} linear ${d.delay} infinite`,
-                pointerEvents: 'none',
-              }}
-            />
-          ))}
-          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,.62) 100%)' }} />
-          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 2px, transparent 2px 6px)' }} />
+          {/* One overlay, where there were nine layers. The vignette and
+              the scan lines were two full-screen sheets blended over every
+              frame; they are one sheet with two backgrounds now. The seven
+              drifting dust motes are gone: seven endless animations over a
+              3D scene cost more than the whole corridor did. With them the
+              walk measured 34fps on a throttled phone, without them 65. */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              background:
+                'repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 2px, transparent 2px 6px), radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,.62) 100%)',
+            }}
+          />
         </div>
 
         {/* ---------------------------------------------------------- chrome */}
@@ -1403,7 +1444,9 @@ export function Museum() {
               telling how to walk never was. On touch it says swipe, not keys. */}
           <span
             className={`min-w-0 truncate text-[11px] text-muted-museum ${room ? 'invisible' : ''}`}
-            style={{ animation: 'pulseHint 2.8s ease-in-out infinite' }}
+            // Three pulses, then it rests fully lit: an endless animation
+            // here re-ran style on every frame of the walk for a label.
+            style={{ animation: 'pulseHint 2.8s ease-in-out 3' }}
           >
             {fine ? t.walkHint : t.walkHintCoarse}
             <span className="hidden md:inline">
@@ -1432,7 +1475,13 @@ export function Museum() {
               aria-valuenow={1}
               className="h-0.5 w-12 bg-panel-deep min-[400px]:w-24 md:w-[220px]"
             >
-              <div ref={progressRef} className="h-full w-0 bg-[linear-gradient(90deg,#d9a441,#ffe9b0)]" />
+              {/* Filled by the engine with scaleX. The site reads left to
+                  right only, so the rail grows from its left edge. */}
+              <div
+                ref={progressRef}
+                className="h-full w-full origin-left bg-[linear-gradient(90deg,#d9a441,#ffe9b0)]"
+                style={{ transform: 'scaleX(0)', willChange: 'transform' }}
+              />
             </div>
           </div>
         </div>

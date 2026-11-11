@@ -14,11 +14,31 @@
  * that governs the page chrome does not apply here.
  */
 
-import { memo } from 'react'
+import { memo, type CSSProperties } from 'react'
+import { Surface } from './Surface'
 
-export type RegisterBay = (key: string, z: number, stagger: boolean) => (el: HTMLDivElement | null) => void
+export type RegisterBay = (
+  key: string,
+  z: number,
+  options?: { x?: number; interactive?: boolean },
+) => (el: HTMLDivElement | null) => void
+
+/**
+ * A bay's wrapper. It carries no transform of its own here: the engine owns
+ * it (useCorridor's BIRTH_FRAMES and PARKED), first to stand the bay ahead of
+ * the camera while its textures are made, then to park it when out of range.
+ */
+const BAY: CSSProperties = {
+  position: 'absolute',
+  left: '50%',
+  top: '50%',
+  transformStyle: 'preserve-3d',
+  pointerEvents: 'none',
+}
 
 const BAY_COUNT = 10
+/** Where the runner's two gold edges lie, left of centre and right of it. */
+const CARPET_EDGES = [-190, 187] as const
 /** Depth of bay 0; bays repeat every 1400px, in step with CORRIDOR.STEP. */
 const BAY_FIRST = -500
 const BAY_STEP = 1400
@@ -84,8 +104,9 @@ function Figure({ x, z, scale }: { x: number; z: number; scale: number }) {
         top: '50%',
         width: 120 * scale,
         height: 402 * scale,
-        margin: `${-62 * scale}px ${-60 * scale}px`,
-        transform: `translateX(${x}px) translateZ(${z}px)`,
+        margin: `${String(-62 * scale)}px ${String(-60 * scale)}px`,
+        transform: `translateX(${String(x)}px) translateZ(${String(z)}px)`,
+        willChange: 'transform',
       }}
     >
       <div
@@ -131,16 +152,15 @@ function SideWall({ spec, side }: { spec: BaySpec; side: -1 | 1 }) {
   const showDoor = side === -1 ? spec.doorLeft : spec.doorRight
   const showWindow = side === -1 ? spec.windowLeft : !spec.windowLeft
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        width: 1400,
-        height: 980,
-        margin: '-560px -700px',
-        transform: `translateX(${side * 882}px) translateZ(${spec.wz}px) rotateY(${side * -90}deg)`,
-        backfaceVisibility: 'hidden',
+    <Surface
+      w={1400}
+      h={980}
+      top="50%"
+      marginLeft={-700}
+      marginTop={-560}
+      transform={`translateX(${String(side * 882)}px) translateZ(${String(spec.wz)}px) rotateY(${String(side * -90)}deg)`}
+      backfaceHidden
+      paint={{
         background: WALL_TEXTURE,
         borderTop: '1px solid rgba(217,164,65,.28)',
         borderBottom: '2px solid rgba(217,164,65,.4)',
@@ -189,7 +209,7 @@ function SideWall({ spec, side }: { spec: BaySpec; side: -1 | 1 }) {
           }}
         />
       )}
-    </div>
+    </Surface>
   )
 }
 
@@ -197,18 +217,14 @@ function BayGeometry({ spec }: { spec: BaySpec }) {
   return (
     <>
       {/* Floor slab, with the red runner and a pool of lamplight on it. */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: 340,
-          width: 1900,
-          height: 1400,
-          marginLeft: -950,
-          transform: `translateZ(${spec.fz}px) rotateX(-90deg)`,
-          transformOrigin: 'top center',
-          background: 'linear-gradient(#1a1208, #0e0a06)',
-        }}
+      <Surface
+        w={1900}
+        h={1400}
+        top={340}
+        marginLeft={-950}
+        hinged
+        transform={`translateZ(${String(spec.fz)}px) rotateX(-90deg)`}
+        paint={{ background: 'linear-gradient(#1a1208, #0e0a06)' }}
       >
         <div
           style={{
@@ -219,9 +235,6 @@ function BayGeometry({ spec }: { spec: BaySpec }) {
             height: '100%',
             marginLeft: -190,
             background: 'linear-gradient(#7a1420, #4d0d14)',
-            borderLeft: '3px solid #d9a441',
-            borderRight: '3px solid #d9a441',
-            boxSizing: 'border-box',
           }}
         />
         <div
@@ -235,35 +248,51 @@ function BayGeometry({ spec }: { spec: BaySpec }) {
               'radial-gradient(ellipse, rgba(255,236,196,.2), rgba(255,236,196,.05) 52%, transparent 74%)',
           }}
         />
-      </div>
+      </Surface>
+
+      {/* The runner's gold edges. On the low-resolution floor a 3px line is
+          half a texel, and under the camera it smeared into a dim band. These
+          two are full resolution, and at 3x1400 that costs almost nothing.
+          They lie a pixel above the slab so the two never fight for depth. */}
+      {CARPET_EDGES.map((x) => (
+        <div
+          key={x}
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: 339,
+            width: 3,
+            height: 1400,
+            marginLeft: x,
+            transform: `translateZ(${String(spec.fz)}px) rotateX(-90deg)`,
+            transformOrigin: 'top center',
+            background: '#d9a441',
+            willChange: 'transform',
+          }}
+        />
+      ))}
 
       {/* Shaft of daylight falling in from the clerestory window. */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: -520,
-          width: 430,
-          height: 790,
-          marginLeft: -215,
-          transform: `translateX(${spec.shaftX}px) translateZ(${spec.z}px) rotateY(${spec.shaftRy}deg) skewX(${spec.shaftSkew}deg)`,
+      <Surface
+        w={430}
+        h={790}
+        top={-520}
+        marginLeft={-215}
+        transform={`translateX(${String(spec.shaftX)}px) translateZ(${String(spec.z)}px) rotateY(${String(spec.shaftRy)}deg) skewX(${String(spec.shaftSkew)}deg)`}
+        paint={{
           background: 'linear-gradient(180deg, rgba(255,236,196,.15), rgba(255,236,196,.05) 52%, transparent 90%)',
         }}
       />
 
       {/* Coffered ceiling with its skylight. */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: -556,
-          width: 1790,
-          height: 1400,
-          marginLeft: -895,
-          transform: `translateZ(${spec.fz}px) rotateX(-90deg)`,
-          transformOrigin: 'top center',
-          background: CEILING_TEXTURE,
-        }}
+      <Surface
+        w={1790}
+        h={1400}
+        top={-556}
+        marginLeft={-895}
+        hinged
+        transform={`translateZ(${String(spec.fz)}px) rotateX(-90deg)`}
+        paint={{ background: CEILING_TEXTURE }}
       >
         <div
           style={{
@@ -278,22 +307,21 @@ function BayGeometry({ spec }: { spec: BaySpec }) {
               'radial-gradient(ellipse, rgba(255,238,196,.5), rgba(255,214,130,.12) 58%, transparent 80%)',
           }}
         />
-      </div>
+      </Surface>
 
       {/* The arch across the corridor, its lamp and its two piers. */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '50%',
-          width: 1760,
-          height: 980,
-          margin: '-560px -880px',
-          transform: `translateZ(${spec.z}px)`,
+      <Surface
+        w={1760}
+        h={980}
+        top="50%"
+        marginLeft={-880}
+        marginTop={-560}
+        transform={`translateZ(${String(spec.z)}px)`}
+        opacity={0.75}
+        paint={{
           border: '3px solid rgba(217,164,65,.55)',
           borderBottom: 'none',
           borderRadius: '520px 520px 0 0',
-          opacity: 0.75,
         }}
       >
         <div
@@ -330,7 +358,7 @@ function BayGeometry({ spec }: { spec: BaySpec }) {
             borderTop: '4px solid #d9a441',
           }}
         />
-      </div>
+      </Surface>
 
       <SideWall spec={spec} side={-1} />
       <SideWall spec={spec} side={1} />
@@ -345,48 +373,41 @@ function BayGeometry({ spec }: { spec: BaySpec }) {
               width: 300,
               height: 132,
               marginLeft: spec.benchX,
-              transform: `translateZ(${spec.wz}px) rotateX(-90deg)`,
+              transform: `translateZ(${String(spec.wz)}px) rotateX(-90deg)`,
               transformOrigin: 'top center',
               background: 'linear-gradient(#a3242f, #6d1220)',
+              willChange: 'transform',
             }}
           />
+          {/* The front board and both legs stand in one plane, so they are
+              one element — one texture — rather than the three they were. */}
           <div
             style={{
               position: 'absolute',
               left: '50%',
               top: 250,
               width: 300,
-              height: 28,
+              height: 90,
               marginLeft: spec.benchX,
-              transform: `translateZ(${spec.wz}px)`,
-              background: 'linear-gradient(#7a1420, #4a0d13)',
-              borderTop: '2px solid #d9a441',
+              transform: `translateZ(${String(spec.wz)}px)`,
+              willChange: 'transform',
             }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: 278,
-              width: 16,
-              height: 62,
-              marginLeft: spec.benchX + 26,
-              transform: `translateZ(${spec.wz}px)`,
-              background: 'linear-gradient(#312514, #140d07)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: 278,
-              width: 16,
-              height: 62,
-              marginLeft: spec.benchX + 258,
-              transform: `translateZ(${spec.wz}px)`,
-              background: 'linear-gradient(#312514, #140d07)',
-            }}
-          />
+          >
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: 300,
+                height: 28,
+                boxSizing: 'border-box',
+                background: 'linear-gradient(#7a1420, #4a0d13)',
+                borderTop: '2px solid #d9a441',
+              }}
+            />
+            <div style={{ position: 'absolute', left: 26, top: 28, width: 16, height: 62, background: 'linear-gradient(#312514, #140d07)' }} />
+            <div style={{ position: 'absolute', left: 258, top: 28, width: 16, height: 62, background: 'linear-gradient(#312514, #140d07)' }} />
+          </div>
         </>
       )}
     </>
@@ -399,8 +420,8 @@ export const Bays = memo(function Bays({ registerBay }: { registerBay: RegisterB
       {BAYS.map((spec, i) => (
         <div
           key={spec.z}
-          ref={registerBay(`bay-${i}`, spec.z, true)}
-          style={{ position: 'absolute', left: '50%', top: '50%', transformStyle: 'preserve-3d', pointerEvents: 'none' }}
+          ref={registerBay(`bay-${String(i)}`, spec.z)}
+          style={BAY}
         >
           <BayGeometry spec={spec} />
         </div>
@@ -408,8 +429,8 @@ export const Bays = memo(function Bays({ registerBay }: { registerBay: RegisterB
 
       {/* The rotunda colonnade, where the two wings meet. */}
       <div
-        ref={registerBay('rotunda', -6820, false)}
-        style={{ position: 'absolute', left: '50%', top: '50%', transformStyle: 'preserve-3d', pointerEvents: 'none' }}
+        ref={registerBay('rotunda', -6820)}
+        style={BAY}
       >
         {ROTUNDA_COLUMNS.map((c) => (
           <div key={`${c.x}:${c.z}`} style={{ transformStyle: 'preserve-3d' }}>
@@ -421,7 +442,8 @@ export const Bays = memo(function Bays({ registerBay }: { registerBay: RegisterB
                 width: 96,
                 height: 880,
                 margin: '-530px -48px',
-                transform: `translateX(${c.x}px) translateZ(${c.z}px)`,
+                transform: `translateX(${String(c.x)}px) translateZ(${String(c.z)}px)`,
+                willChange: 'transform',
                 background: 'linear-gradient(90deg, #0d0904, #241a0c 20%, #4a3c22 46%, #241a0c 74%, #0b0704)',
                 borderTop: '12px solid #d9a441',
                 borderBottom: '14px solid #5c4622',
@@ -436,7 +458,8 @@ export const Bays = memo(function Bays({ registerBay }: { registerBay: RegisterB
                 width: 96,
                 height: 880,
                 margin: '-530px -48px',
-                transform: `translateX(${c.x}px) translateZ(${c.z}px) rotateY(90deg)`,
+                transform: `translateX(${String(c.x)}px) translateZ(${String(c.z)}px) rotateY(90deg)`,
+                willChange: 'transform',
                 background: 'linear-gradient(90deg, #0b0704, #1d1409 22%, #3a2e1a 48%, #1d1409 76%, #0b0704)',
                 borderTop: '12px solid #b98d3c',
                 borderBottom: '14px solid #4a3c22',
@@ -448,15 +471,15 @@ export const Bays = memo(function Bays({ registerBay }: { registerBay: RegisterB
       </div>
 
       <div
-        ref={registerBay('figures-near', -3600, false)}
-        style={{ position: 'absolute', left: '50%', top: '50%', transformStyle: 'preserve-3d', pointerEvents: 'none' }}
+        ref={registerBay('figures-near', -3600)}
+        style={BAY}
       >
         <Figure x={-170} z={-3560} scale={1} />
       </div>
 
       <div
-        ref={registerBay('figures-far', -8000, false)}
-        style={{ position: 'absolute', left: '50%', top: '50%', transformStyle: 'preserve-3d', pointerEvents: 'none' }}
+        ref={registerBay('figures-far', -8000)}
+        style={BAY}
       >
         <Figure x={268} z={-7980} scale={0.97} />
         <Figure x={392} z={-8180} scale={0.9} />

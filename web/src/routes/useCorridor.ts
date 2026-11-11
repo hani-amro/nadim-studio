@@ -154,9 +154,16 @@ export interface Corridor {
   progressRef: RefObject<HTMLDivElement | null>
   railRef: RefObject<HTMLDivElement | null>
   counterRef: RefObject<HTMLSpanElement | null>
+  /** The painting's group: carries its place in the hall and the 1.3s swing
+   *  when it is opened. It has no opacity of its own. */
   registerPainting: (i: number) => Register<HTMLDivElement>
+  /** The painting's one flat layer (frame, image, caption): the distance
+   *  fade is written here, where it is a single texture's alpha. On the
+   *  group it was an opacity over several 3D layers, which the GPU can only
+   *  do by drawing the whole group to an offscreen surface first. */
+  registerBody: (i: number) => Register<HTMLDivElement>
   registerGlow: (i: number) => Register<HTMLDivElement>
-  registerBay: (key: string, z: number, stagger: boolean) => Register<HTMLDivElement>
+  registerBay: (key: string, z: number, options?: BayOptions) => Register<HTMLDivElement>
   registerMirror: Register<HTMLDivElement>
   registerPlaque: Register<HTMLDivElement>
   /** Park in front of painting `i` and report it as focused. */
@@ -201,11 +208,49 @@ interface Motion {
 interface Bay {
   el: HTMLElement
   z: number
-  /** Repeating corridor bays reveal their children a few per frame. Only the
-   *  memoised geometry may do this — React must never re-render those nodes
-   *  while the engine owns their `visibility`. */
-  stagger: boolean
+  /** Where the group stands sideways (the study room is 1750px off the
+   *  carpet), so it can be born in the middle of the screen. */
+  x: number
+  /** The group holds a button or a link, so it is made `inert` while it is
+   *  parked. The corridor bays hold none, and toggling `inert` on forty
+   *  elements re-runs style for all of them on the frame a bay returns. */
+  interactive: boolean
 }
+
+export interface BayOptions {
+  /** Where the group stands sideways, if it is not on the carpet. */
+  x?: number
+  /** It contains something a visitor can focus or press. */
+  interactive?: boolean
+}
+
+/**
+ * Layers are born once and never destroyed.
+ *
+ * A browser decides how finely to rasterise a 3D layer the first time it
+ * draws it at between a quarter of its size and its full size, and with
+ * `will-change` it then keeps that scale for the life of the layer. A layer
+ * that comes into view gradually passes through that band and lands on its
+ * natural, small scale. A layer that first appears next to the camera skips
+ * the band and is pinned at many times its size instead.
+ *
+ * The old engine culled with `visibility: hidden`, which destroys the layer:
+ * every bay re-entered while walking backwards, and every bay when a painting
+ * was closed, was created again beside the camera. One such frame measured
+ * 1.9 seconds on an Intel UHD laptop.
+ *
+ * So each group is shown once, as it mounts behind the entrance doors,
+ * BIRTH_AHEAD in front of the camera, where every plane of it is inside the
+ * band. After that it is never hidden: out of range it is parked far below
+ * the hall, off-screen and undrawn but alive, with its small texture scale
+ * intact, and it comes back by having that offset removed.
+ */
+const BIRTH_FRAMES = 3
+/** How far ahead of the camera a group is born. At this distance a plane laid
+ *  out at 1/LOW appears at 0.5 to 0.9 of its box on a laptop and on a phone. */
+const BIRTH_AHEAD = 5000
+/** Where a group waits while it is out of range. */
+export const PARKED = 'translate3d(0px, 1000000px, 0px)'
 
 export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corridor {
   const lookRef = useRef<HTMLDivElement | null>(null)
@@ -215,10 +260,12 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
   const counterRef = useRef<HTMLSpanElement | null>(null)
 
   const paintEls = useRef<(HTMLElement | null)[]>([])
+  const bodyEls = useRef<(HTMLElement | null)[]>([])
   const glowEls = useRef<(HTMLElement | null)[]>([])
   const bays = useRef(new Map<string, Bay>())
   const bayOn = useRef(new Map<string, boolean>())
-  const reveal = useRef<HTMLElement[]>([])
+  /** Bays still being born, and the frames each has left. */
+  const birth = useRef(new Map<string, number>())
   const mirrorEl = useRef<HTMLElement | null>(null)
   const plaqueEl = useRef<HTMLElement | null>(null)
   const lastOp = useRef<number[]>([])
@@ -331,22 +378,48 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     [],
   )
 
+  const registerBody = useCallback(
+    (i: number): Register<HTMLDivElement> =>
+      (el) => {
+        bodyEls.current[i] = el
+        // A fresh node has no fade written on it yet: forget the last value
+        // so the next pass writes it rather than assuming it is in place.
+        if (el) {
+          lastOp.current[i] = -1
+          m.current.needsPass = true
+        }
+      },
+    [],
+  )
+
   const registerGlow = useCallback(
     (i: number): Register<HTMLDivElement> =>
       (el) => {
         glowEls.current[i] = el
+        if (el) {
+          lastGlow.current[i] = -1
+          m.current.needsPass = true
+        }
       },
     [],
   )
 
   const registerBay = useCallback(
-    (key: string, z: number, stagger: boolean): Register<HTMLDivElement> =>
+    (key: string, z: number, options: BayOptions = {}): Register<HTMLDivElement> =>
       (el) => {
+        const x = options.x ?? 0
         if (el) {
-          bays.current.set(key, { el, z, stagger })
+          bays.current.set(key, { el, z, x, interactive: options.interactive === true })
+          // Born here, before the first paint, straight ahead of the camera
+          // wherever it stands (see BIRTH_FRAMES).
+          const s = m.current
+          el.style.transform = `translate3d(${(-x - s.x).toFixed(0)}px, ${(-s.y).toFixed(0)}px, ${(-z - s.cam - BIRTH_AHEAD).toFixed(0)}px)`
+          birth.current.set(key, BIRTH_FRAMES)
+          s.needsPass = true
         } else {
           bays.current.delete(key)
           bayOn.current.delete(key)
+          birth.current.delete(key)
         }
       },
     [],
@@ -631,7 +704,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
         Math.abs(s.tRy - s.ry) > 0.006 ||
         Math.abs(s.tRx - s.rx) > 0.006
       )
-      if (idle && !s.needsPass && reveal.current.length === 0) {
+      if (idle && !s.needsPass && birth.current.size === 0) {
         s.tPrev = now
         return
       }
@@ -666,10 +739,12 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
         writeLook()
       }
 
-      const pw = `${(Math.round(Math.max(0, Math.min(1, s.cam / CORRIDOR.DEPTH)) * 200) / 2).toFixed(1)}%`
+      // scaleX, not width: a width change is a layout and a repaint of the
+      // HUD on most frames of the walk; a transform is neither.
+      const pw = (Math.round(Math.max(0, Math.min(1, s.cam / CORRIDOR.DEPTH)) * 200) / 200).toFixed(3)
       if (progressRef.current && s.lastPw !== pw) {
         s.lastPw = pw
-        progressRef.current.style.width = pw
+        progressRef.current.style.transform = `scaleX(${pw})`
       }
 
       // The HUD counter and the Enter key both resolve "which painting am I
@@ -695,7 +770,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       }
 
       for (let k = 0; k < COUNT; k++) {
-        const el = paintEls.current[k]
+        const el = bodyEls.current[k]
         if (!el) continue
         let op: number
         if (u.focus != null) {
@@ -707,7 +782,10 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
         if (lastOp.current[k] !== op) {
           lastOp.current[k] = op
           el.style.opacity = String(op)
-          el.style.visibility = op === 0 ? 'hidden' : 'visible'
+          // Faded out, not hidden: hiding would destroy the layer, and a
+          // painting met again from behind would be redrawn at many times
+          // its size. `inert` keeps its button unreachable while it is gone.
+          el.inert = op === 0
         }
         const glow = glowEls.current[k]
         if (!glow) continue
@@ -719,11 +797,18 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
         }
       }
 
+      for (const [key, left] of birth.current) {
+        if (left > 0) birth.current.set(key, left - 1)
+        else birth.current.delete(key)
+      }
       for (const [key, bay] of bays.current) {
+        // Still being born: it stays ahead of the camera until it has been
+        // drawn there, and only then joins the culling below.
+        if (birth.current.has(key)) continue
         const bd = bay.z + s.cam
         // `undefined` on the first pass, deliberately: comparing it against a
         // boolean below is what forces every bay to be written once, so a bay
-        // that starts out of range is actually hidden instead of staying
+        // that starts out of range is actually parked instead of staying
         // rendered and keyboard-focusable at the entrance.
         const was = bayOn.current.get(key)
         // Hysteresis: a wider window to leave than to enter, so a bay sitting
@@ -731,26 +816,11 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
         const on = u.focus != null ? false : was === true ? bd > -3000 && bd < 1900 : bd > -2600 && bd < 1500
         if (was === on) continue
         bayOn.current.set(key, on)
-        if (on) {
-          if (bay.stagger) {
-            for (const child of Array.from(bay.el.children)) {
-              if (!(child instanceof HTMLElement)) continue
-              child.style.visibility = 'hidden'
-              reveal.current.push(child)
-            }
-          }
-          bay.el.style.visibility = 'visible'
-        } else {
-          bay.el.style.visibility = 'hidden'
-          if (reveal.current.length) {
-            reveal.current = reveal.current.filter((c) => c.parentElement !== bay.el)
-          }
-        }
+        // Parked, not hidden: `visibility: hidden` would destroy the layers.
+        bay.el.style.transform = on ? '' : PARKED
+        // `inert` is what keeps a parked doorway out of the tab order.
+        if (bay.interactive) bay.el.inert = !on
       }
-      // One element per frame: revealing a whole bay at once is a paint spike
-      // big enough to drop a frame on a mid-range phone.
-      const next = reveal.current.shift()
-      if (next) next.style.visibility = 'visible'
 
       if (mirrorEl.current) {
         const md = Math.abs(MIRROR_Z + s.cam)
@@ -779,7 +849,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     raf.current = requestAnimationFrame(loop)
 
     const pending = timers.current
-    const revealAtSetup = reveal.current
+    const birthAtSetup = birth.current
     const bayOnAtSetup = bayOn.current
 
     return () => {
@@ -795,7 +865,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       pending.clear()
       // Captured above, not read off the ref here: by cleanup time the ref may
       // already point at a different object than the effect was working with.
-      revealAtSetup.length = 0
+      birthAtSetup.clear()
       bayOnAtSetup.clear()
     }
   }, [exitRoom, goTo, open, syncFromScroll, narrowNow, focusPose, walkX])
@@ -810,6 +880,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       railRef,
       counterRef,
       registerPainting,
+      registerBody,
       registerGlow,
       registerBay,
       registerMirror,
@@ -825,6 +896,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
     }),
     [
       registerPainting,
+      registerBody,
       registerGlow,
       registerBay,
       registerMirror,
