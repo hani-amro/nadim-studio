@@ -20,7 +20,7 @@ import { Surface } from './Surface'
 export type RegisterBay = (
   key: string,
   z: number,
-  options?: { x?: number; interactive?: boolean },
+  options?: { x?: number; inertWhenParked?: boolean },
 ) => (el: HTMLDivElement | null) => void
 
 /**

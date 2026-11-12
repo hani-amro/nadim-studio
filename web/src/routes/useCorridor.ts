@@ -211,17 +211,22 @@ interface Bay {
   /** Where the group stands sideways (the study room is 1750px off the
    *  carpet), so it can be born in the middle of the screen. */
   x: number
-  /** The group holds a button or a link, so it is made `inert` while it is
-   *  parked. The corridor bays hold none, and toggling `inert` on forty
-   *  elements re-runs style for all of them on the frame a bay returns. */
-  interactive: boolean
+  /** Made `inert` while parked. See BayOptions.inertWhenParked. */
+  inertWhenParked: boolean
 }
 
 export interface BayOptions {
   /** Where the group stands sideways, if it is not on the carpet. */
   x?: number
-  /** It contains something a visitor can focus or press. */
-  interactive?: boolean
+  /**
+   * The group holds something a visitor can focus, press or read: a button,
+   * a link, a line of text. A parked group is only moved out of sight, so
+   * without `inert` its buttons stay in the tab order and its words stay in
+   * the accessibility tree and in find-in-page. The corridor bays hold none
+   * of that and are left alone: toggling `inert` on forty planes re-runs
+   * style for all of them on the frame a bay returns.
+   */
+  inertWhenParked?: boolean
 }
 
 /**
@@ -409,7 +414,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
       (el) => {
         const x = options.x ?? 0
         if (el) {
-          bays.current.set(key, { el, z, x, interactive: options.interactive === true })
+          bays.current.set(key, { el, z, x, inertWhenParked: options.inertWhenParked === true })
           // Born here, before the first paint, straight ahead of the camera
           // wherever it stands (see BIRTH_FRAMES).
           const s = m.current
@@ -819,7 +824,7 @@ export function useCorridor(ui: CorridorUi, handlers: CorridorHandlers): Corrido
         // Parked, not hidden: `visibility: hidden` would destroy the layers.
         bay.el.style.transform = on ? '' : PARKED
         // `inert` is what keeps a parked doorway out of the tab order.
-        if (bay.interactive) bay.el.inert = !on
+        if (bay.inertWhenParked) bay.el.inert = !on
       }
 
       if (mirrorEl.current) {

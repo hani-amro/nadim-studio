@@ -157,10 +157,10 @@ export function Museum() {
   const glowRefs = useMemo(() => ARTWORKS.map((_, i) => corridor.registerGlow(i)), [corridor])
   const bayRefs = useMemo(
     () => ({
-      studyDoor: corridor.registerBay('study-door', -5400, { x: -878, interactive: true }),
-      studyRoom: corridor.registerBay('study-room', -5500, { x: -1750 }),
-      lectern: corridor.registerBay('lectern', -12500, { interactive: true }),
-      mapPlaque: corridor.registerBay('map-plaque', -650, { interactive: true }),
+      studyDoor: corridor.registerBay('study-door', -5400, { x: -878, inertWhenParked: true }),
+      studyRoom: corridor.registerBay('study-room', -5500, { x: -1750, inertWhenParked: true }),
+      lectern: corridor.registerBay('lectern', -12500, { inertWhenParked: true }),
+      mapPlaque: corridor.registerBay('map-plaque', -650, { inertWhenParked: true }),
     }),
     [corridor],
   )
@@ -723,7 +723,11 @@ export function Museum() {
                     left: '50%',
                     top: '50%',
                     transform: `translateX(520px) translateZ(${String(PLAQUE_Z)}px) rotateY(-26deg)`,
-                    willChange: 'transform, opacity',
+                    // Transform only. `opacity` in will-change flattens a
+                    // preserve-3d group: the plaque's foot, lying on the
+                    // floor, became a line with no depth, and in a browser
+                    // without GPU compositing the whole sign vanished.
+                    willChange: 'transform',
                     transformStyle: 'preserve-3d',
                   }}
                 >
@@ -1444,9 +1448,11 @@ export function Museum() {
               telling how to walk never was. On touch it says swipe, not keys. */}
           <span
             className={`min-w-0 truncate text-[11px] text-muted-museum ${room ? 'invisible' : ''}`}
-            // Three pulses, then it rests fully lit: an endless animation
-            // here re-ran style on every frame of the walk for a label.
-            style={{ animation: 'pulseHint 2.8s ease-in-out 3' }}
+            // Steady, not pulsing. The pulse was endless, then three pulses
+            // that were spent behind the intro doors; started when the doors
+            // open instead, it ran through the first ten seconds of the walk
+            // and measured 10% slower there, the moment a visitor forms an
+            // impression. A lit label says the same thing for free.
           >
             {fine ? t.walkHint : t.walkHintCoarse}
             <span className="hidden md:inline">
