@@ -13,7 +13,7 @@ import { usePaintCanvas } from './usePaintCanvas'
 const SHELL = 'px-[clamp(18px,5vw,48px)]'
 
 /**
- * The editorial grid, and the audit's only S1 fixed.
+ * The editorial grid.
  *
  * The legacy layout was `repeat(6, 1fr)` with fixed pixel heights and no media
  * query at all, so on a 390px phone every painting became an unreadable sliver

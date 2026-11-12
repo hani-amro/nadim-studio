@@ -33,8 +33,8 @@ export function Sculpture() {
       // hide a cascading render but because this IS the documented case: an
       // external system (WebGL) failed during setup and the UI has to say so.
       // Deriving it during render is impossible — the failure only exists once
-      // the effect has tried. The alternative is the blank rectangle the audit
-      // flagged on the old page.
+      // the effect has tried. The alternative is a blank rectangle, as on the
+      // old page.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFailed(true)
       return

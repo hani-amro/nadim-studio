@@ -24,7 +24,7 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      // The house rules from CLAUDE.md, enforced rather than remembered.
+      // House rules, enforced rather than remembered.
       'no-console': ['error', { allow: ['error', 'warn'] }],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
